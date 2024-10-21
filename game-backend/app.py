@@ -21,7 +21,13 @@ def sample_data():
             {"id": 3, "name": "KAUST", "type": "destination"}
         ],
         "initialBudget": 1000,
-        "weatherForecast": ["clear", "hot", "sandstorm"]
+        "weatherForecast": ["clear", "hot", "sandstorm"],
+        "inventory": {
+            "water": 5,
+            "food": 5,
+            "fuel": 10
+        },
+        "score": 123
     }
     return jsonify(data)
 
@@ -30,6 +36,17 @@ def receive_data():
     data = request.json
     print("Received data:", data)
     return jsonify({"message": f"Data received: {data['message']}"})
+
+@app.route('/api/increment-score', methods=['POST'])
+def increment_score():
+    data = request.json
+    current_score = data.get('current_score', 0)
+    new_score = current_score + 1
+    return jsonify({"score": new_score})
+
+@app.route('/api/reset-score', methods=['POST'])
+def reset_score():
+    return jsonify({"score": 123})
 
 if __name__ == '__main__':
     app.run(debug=True)
