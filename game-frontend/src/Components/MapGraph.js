@@ -1,5 +1,137 @@
 import React, { useEffect, useState } from 'react';
 
+// Utility functions to normalize coordinates
+const normalizeCoordinates = () => {
+  // Updated latitude and longitude bounds for Saudi Arabia
+  const bounds = {
+    minLat: 16.8892, // Jizan
+    maxLat: 31.3167, // Al Qurayyat
+    minLng: 36.4167, // Al Wajh
+    maxLng: 50.9446, // Updated to include Al Ubayalah
+  };
+
+  // SVG viewport dimensions
+  const svgWidth = 900;
+  const svgHeight = 1200;
+
+  // Function to normalize a single coordinate
+  const normalize = (value, min, max, targetMin, targetMax) => {
+    return ((value - min) * (targetMax - targetMin)) / (max - min) + targetMin;
+  };
+
+  // Complete set of city coordinates
+  return {
+    Riyadh: {
+      x: normalize(46.7167, bounds.minLng, bounds.maxLng, 100, svgWidth - 100),
+      y: normalize(24.6333, bounds.maxLat, bounds.minLat, 100, svgHeight - 100),
+    },
+    Jeddah: {
+      x: normalize(39.1728, bounds.minLng, bounds.maxLng, 100, svgWidth - 100),
+      y: normalize(21.5433, bounds.maxLat, bounds.minLat, 100, svgHeight - 100),
+    },
+    Makkah: {
+      x: normalize(39.8233, bounds.minLng, bounds.maxLng, 100, svgWidth - 100),
+      y: normalize(21.4225, bounds.maxLat, bounds.minLat, 100, svgHeight - 100),
+    },
+    Madinah: {
+      x: normalize(39.61, bounds.minLng, bounds.maxLng, 100, svgWidth - 100),
+      y: normalize(24.47, bounds.maxLat, bounds.minLat, 100, svgHeight - 100),
+    },
+    Khobar: {
+      x: normalize(50.1, bounds.minLng, bounds.maxLng, 100, svgWidth - 100),
+      y: normalize(26.4333, bounds.maxLat, bounds.minLat, 100, svgHeight - 100),
+    },
+    Tabuk: {
+      x: normalize(36.5789, bounds.minLng, bounds.maxLng, 100, svgWidth - 100),
+      y: normalize(28.3972, bounds.maxLat, bounds.minLat, 100, svgHeight - 100),
+    },
+    'Hafar Al Batin': {
+      x: normalize(45.9636, bounds.minLng, bounds.maxLng, 100, svgWidth - 100),
+      y: normalize(28.4342, bounds.maxLat, bounds.minLat, 100, svgHeight - 100),
+    },
+    Yanbu: {
+      x: normalize(38.0582, bounds.minLng, bounds.maxLng, 100, svgWidth - 100),
+      y: normalize(24.0883, bounds.maxLat, bounds.minLat, 100, svgHeight - 100),
+    },
+    Hail: {
+      x: normalize(41.6833, bounds.minLng, bounds.maxLng, 100, svgWidth - 100),
+      y: normalize(27.5167, bounds.maxLat, bounds.minLat, 100, svgHeight - 100),
+    },
+    Abha: {
+      x: normalize(42.5053, bounds.minLng, bounds.maxLng, 100, svgWidth - 100),
+      y: normalize(18.2169, bounds.maxLat, bounds.minLat, 100, svgHeight - 100),
+    },
+    Sakakah: {
+      x: normalize(40.2, bounds.minLng, bounds.maxLng, 100, svgWidth - 100),
+      y: normalize(29.9697, bounds.maxLat, bounds.minLat, 100, svgHeight - 100),
+    },
+    Jizan: {
+      x: normalize(42.5611, bounds.minLng, bounds.maxLng, 100, svgWidth - 100),
+      y: normalize(16.8892, bounds.maxLat, bounds.minLat, 100, svgHeight - 100),
+    },
+    Najran: {
+      x: normalize(44.1322, bounds.minLng, bounds.maxLng, 100, svgWidth - 100),
+      y: normalize(17.4917, bounds.maxLat, bounds.minLat, 100, svgHeight - 100),
+    },
+    Arar: {
+      x: normalize(41.0231, bounds.minLng, bounds.maxLng, 100, svgWidth - 100),
+      y: normalize(30.9753, bounds.maxLat, bounds.minLat, 100, svgHeight - 100),
+    },
+    'Al Baha': {
+      x: normalize(41.4653, bounds.minLng, bounds.maxLng, 100, svgWidth - 100),
+      y: normalize(20.0125, bounds.maxLat, bounds.minLat, 100, svgHeight - 100),
+    },
+    Taif: {
+      x: normalize(40.4062, bounds.minLng, bounds.maxLng, 100, svgWidth - 100),
+      y: normalize(21.2751, bounds.maxLat, bounds.minLat, 100, svgHeight - 100),
+    },
+    Buraydah: {
+      x: normalize(43.9667, bounds.minLng, bounds.maxLng, 100, svgWidth - 100),
+      y: normalize(26.3333, bounds.maxLat, bounds.minLat, 100, svgHeight - 100),
+    },
+    // Added missing cities
+    'Al Ubayalah': {
+      x: normalize(50.9446, bounds.minLng, bounds.maxLng, 100, svgWidth - 100),
+      y: normalize(21.9878, bounds.maxLat, bounds.minLat, 100, svgHeight - 100),
+    },
+    Haradh: {
+      x: normalize(49.0817, bounds.minLng, bounds.maxLng, 100, svgWidth - 100),
+      y: normalize(24.1354, bounds.maxLat, bounds.minLat, 100, svgHeight - 100),
+    },
+    Halaban: {
+      x: normalize(44.3891, bounds.minLng, bounds.maxLng, 100, svgWidth - 100),
+      y: normalize(23.489, bounds.maxLat, bounds.minLat, 100, svgHeight - 100),
+    },
+    'Al Ula': {
+      x: normalize(37.9295, bounds.minLng, bounds.maxLng, 100, svgWidth - 100),
+      y: normalize(26.6031, bounds.maxLat, bounds.minLat, 100, svgHeight - 100),
+    },
+    Thuwal: {
+      x: normalize(39.1133, bounds.minLng, bounds.maxLng, 100, svgWidth - 100),
+      y: normalize(22.2757, bounds.maxLat, bounds.minLat, 100, svgHeight - 100),
+    },
+    Bisha: {
+      x: normalize(42.5902, bounds.minLng, bounds.maxLng, 100, svgWidth - 100),
+      y: normalize(19.9764, bounds.maxLat, bounds.minLat, 100, svgHeight - 100),
+    },
+    'As Sulayyil': {
+      x: normalize(45.5629, bounds.minLng, bounds.maxLng, 100, svgWidth - 100),
+      y: normalize(20.4669, bounds.maxLat, bounds.minLat, 100, svgHeight - 100),
+    },
+    Sharorah: {
+      x: normalize(47.1167, bounds.minLng, bounds.maxLng, 100, svgWidth - 100),
+      y: normalize(17.485, bounds.maxLat, bounds.minLat, 100, svgHeight - 100),
+    },
+    Rafha: {
+      x: normalize(43.5193, bounds.minLng, bounds.maxLng, 100, svgWidth - 100),
+      y: normalize(29.6273, bounds.maxLat, bounds.minLat, 100, svgHeight - 100),
+    },
+  };
+};
+
+// Use in component as before
+const cityCoordinates = normalizeCoordinates();
+
 // Base speed in km/h for calculations
 const BASE_SPEED = 60;
 
@@ -111,8 +243,8 @@ const baseCoordinates = {
 
 // Scaling configuration so the graph matches map image
 const SCALE_CONFIG = {
-  xScale: 0.9, // Horizontal scaling factor
-  yScale: 0.8, // Vertical scaling factor
+  xScale: 0.5, // Horizontal scaling factor
+  yScale: 0.5, // Vertical scaling factor
   viewBox: {
     width: 900,
     height: 1200,
@@ -145,7 +277,7 @@ const MapGraph = () => {
     return scaled;
   };
 
-  const cityCoordinates = getScaledCoordinates();
+  //const cityCoordinates = getScaledCoordinates();
 
   // Calculate actual travel time based on distance and conditions
   const calculateTravelTime = (distanceKm, speedMultiplier) => {
@@ -299,7 +431,7 @@ const MapGraph = () => {
         <svg
           viewBox='0 0 900 800'
           className='w-full h-[600px] relative z-10'
-          style={{ position: 'absolute', top: 0, left: 0 }}
+          style={{ position: 'absolute', top: 0, left: 0, scale: '0.5' }}
         >
           {/* Render edges */}
           {renderEdges()}
