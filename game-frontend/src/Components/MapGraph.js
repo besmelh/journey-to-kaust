@@ -80,33 +80,43 @@ const edges = {
 };
 
 // Approximate coordinates for cities (normalized to fit in the view)
-const cityCoordinates = {
-  Tabuk: { x: 300, y: 100 },
-  Sakakah: { x: 400, y: 50 },
-  Arar: { x: 500, y: 20 },
-  Rafha: { x: 600, y: 100 },
-  'Hafar Al Batin': { x: 700, y: 200 },
-  Khobar: { x: 800, y: 300 },
-  Haradh: { x: 750, y: 400 },
-  'Al Ubayalah': { x: 700, y: 350 },
-  Riyadh: { x: 600, y: 300 },
-  Halaban: { x: 550, y: 350 },
-  Buraydah: { x: 500, y: 250 },
-  Hail: { x: 400, y: 200 },
-  'Al Ula': { x: 300, y: 200 },
-  Madinah: { x: 250, y: 300 },
-  Yanbu: { x: 200, y: 350 },
-  Thuwal: { x: 150, y: 400 },
-  Jeddah: { x: 100, y: 450 },
-  Makkah: { x: 150, y: 500 },
-  Taif: { x: 250, y: 450 },
-  'Al Baha': { x: 300, y: 500 },
-  Bisha: { x: 400, y: 550 },
-  'As Sulayyil': { x: 500, y: 600 },
-  Abha: { x: 300, y: 600 },
-  Jizan: { x: 200, y: 650 },
-  Najran: { x: 400, y: 650 },
-  Sharorah: { x: 500, y: 700 },
+const baseCoordinates = {
+  Tabuk: { x: 360, y: 220 }, // Northwest
+  Sakakah: { x: 420, y: 180 }, // North
+  Arar: { x: 480, y: 120 }, // Far North
+  Rafha: { x: 550, y: 180 }, // Northeast
+  'Hafar Al Batin': { x: 640, y: 280 }, // Northeast
+  Khobar: { x: 720, y: 380 }, // Eastern Coast
+  Haradh: { x: 680, y: 460 }, // Eastern
+  'Al Ubayalah': { x: 640, y: 420 }, // Eastern Central
+  Riyadh: { x: 580, y: 400 }, // Central
+  Halaban: { x: 540, y: 440 }, // Central
+  Buraydah: { x: 500, y: 340 }, // Central North
+  Hail: { x: 440, y: 300 }, // North Central
+  'Al Ula': { x: 380, y: 320 }, // Northwest
+  Madinah: { x: 340, y: 400 }, // Western
+  Yanbu: { x: 280, y: 440 }, // Western Coast
+  Thuwal: { x: 260, y: 500 }, // Western Coast
+  Jeddah: { x: 240, y: 520 }, // Western Coast
+  Makkah: { x: 280, y: 520 }, // Western
+  Taif: { x: 320, y: 500 }, // Western
+  'Al Baha': { x: 320, y: 580 }, // Southwest
+  Bisha: { x: 400, y: 600 }, // South Central
+  'As Sulayyil': { x: 480, y: 640 }, // South Central
+  Abha: { x: 360, y: 660 }, // Southwest
+  Jizan: { x: 320, y: 720 }, // Far Southwest
+  Najran: { x: 440, y: 700 }, // South
+  Sharorah: { x: 520, y: 740 }, // Southeast
+};
+
+// Scaling configuration so the graph matches map image
+const SCALE_CONFIG = {
+  xScale: 0.9, // Horizontal scaling factor
+  yScale: 0.8, // Vertical scaling factor
+  viewBox: {
+    width: 900,
+    height: 1200,
+  },
 };
 
 const MapGraph = () => {
@@ -123,13 +133,34 @@ const MapGraph = () => {
     sandstorm: 0,
   };
 
+  // Calculate scaled coordinates
+  const getScaledCoordinates = () => {
+    const scaled = {};
+    Object.entries(baseCoordinates).forEach(([city, coords]) => {
+      scaled[city] = {
+        x: coords.x * SCALE_CONFIG.xScale,
+        y: coords.y * SCALE_CONFIG.yScale,
+      };
+    });
+    return scaled;
+  };
+
+  const cityCoordinates = getScaledCoordinates();
+
+  // Calculate actual travel time based on distance and conditions
+  const calculateTravelTime = (distanceKm, speedMultiplier) => {
+    if (speedMultiplier === 0) return Infinity;
+    const speed = BASE_SPEED * speedMultiplier;
+    return distanceKm / speed; // Time in hours
+  };
+
   // Calculate time in hours and minutes
   const formatDuration = (weightInKm, speedMultiplier) => {
     if (speedMultiplier === 0) return 'No travel possible';
-    const minutes = Math.round(weightInKm / speedMultiplier);
-    const hours = Math.floor(minutes / 60);
-    const remainingMinutes = minutes % 60;
-    return `${hours}h ${remainingMinutes}m`;
+    const timeInHours = calculateTravelTime(weightInKm, speedMultiplier);
+    const hours = Math.floor(timeInHours);
+    const minutes = Math.round((timeInHours - hours) * 60);
+    return `${hours}h ${minutes}m`;
   };
 
   // Get connected cities to current city
@@ -268,7 +299,7 @@ const MapGraph = () => {
         <svg
           viewBox='0 0 900 800'
           className='w-full h-[600px] relative z-10'
-          style={{ position: 'absolute', top: 0, left: 0, scale: '0.5' }}
+          style={{ position: 'absolute', top: 0, left: 0 }}
         >
           {/* Render edges */}
           {renderEdges()}
@@ -314,11 +345,11 @@ const MapGraph = () => {
           <li>Blue vertices: Reachable cities</li>
           <li>Grey vertices: Currently unreachable cities</li>
           <li>Purple: Visited path</li>
-          <li>Edge colors in clear weather:</li>
+          <li>Travel speeds:</li>
           <ul className='list-disc pl-5'>
-            <li>Blue: Normal speed</li>
-            <li>Orange: Half speed (hot weather)</li>
-            <li>Red: No travel possible (sandstorm)</li>
+            <li>Clear weather: {BASE_SPEED} km/h</li>
+            <li>Hot weather: {BASE_SPEED * 0.5} km/h</li>
+            <li>Sandstorm: 0 km/h (no travel)</li>
           </ul>
         </ul>
       </div>
