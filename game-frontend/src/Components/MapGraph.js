@@ -35,6 +35,7 @@ const MapContainer = styled.div`
   padding: 1rem;
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
   height: 800px;
+  scale: 80%;
 `;
 
 const BackgroundMap = styled.img`
@@ -51,6 +52,8 @@ const MapSVG = styled.svg`
   inset: 0;
   width: 100%;
   height: 100%;
+  left: 70px;
+  top: -70px;
 `;
 
 const Legend = styled.div`
@@ -229,8 +232,8 @@ function normalize(value, min, max, targetMin, targetMax) {
 
 // Scaling configuration so the graph matches map image
 const SCALE_CONFIG = {
-  xScale: 1, // Horizontal scaling factor
-  yScale: 1, // Vertical scaling factor
+  xScale: 0.95, // Horizontal scaling factor
+  yScale: 1.2, // Vertical scaling factor
   viewBox: {
     width: 900,
     height: 900,
@@ -401,7 +404,7 @@ const MapGraph = () => {
 
       <MapContainer>
         <BackgroundMap src='/saudi-arabia-map.svg' alt='Saudi Arabia Map' />
-        <MapSVG viewBox='0 0 900 900'>
+        <MapSVG>
           {renderEdges()}
           {Object.entries(cityCoordinates).map(([city, coords]) => (
             <g
