@@ -230,10 +230,10 @@ function normalize(value, min, max, targetMin, targetMax) {
 // Scaling configuration so the graph matches map image
 const SCALE_CONFIG = {
   xScale: 1, // Horizontal scaling factor
-  yScale: 1.2, // Vertical scaling factor
+  yScale: 1, // Vertical scaling factor
   viewBox: {
-    width: 1400,
-    height: 1400,
+    width: 900,
+    height: 900,
   },
 };
 
@@ -386,84 +386,70 @@ const MapGraph = () => {
   };
 
   return (
-    <div className='w-full max-w-6xl mx-auto p-4'>
-      <div className='mb-4 flex justify-between items-center'>
-        <h2 className='text-xl font-bold'>Saudi Arabia Travel Map</h2>
-        <select
+    <Container>
+      <Header>
+        <Title>Saudi Arabia Travel Map</Title>
+        <WeatherSelect
           value={weatherState}
           onChange={(e) => setWeatherState(e.target.value)}
-          className='px-3 py-2 border rounded'
         >
           <option value='clear'>Clear (x1 speed)</option>
           <option value='hot'>Hot (x0.5 speed)</option>
           <option value='sandstorm'>Sandstorm (x0 speed)</option>
-        </select>
-      </div>
+        </WeatherSelect>
+      </Header>
 
-      <div className='relative border rounded-lg bg-white p-4 shadow-lg h-[800px]'>
-        <div className='absolute inset-0'>
-          <img
-            src='/saudi-arabia-map.svg'
-            alt='Saudi Arabia Map'
-            className='w-full h-full object-contain opacity-10'
-          />
-        </div>
-        <div className='absolute inset-0'>
-          <svg viewBox='0 0 900 800' className='w-full h-full'>
-            {renderEdges()}
-            {Object.entries(cityCoordinates).map(([city, coords]) => (
-              <g
-                key={city}
-                onMouseEnter={() => setHoveredCity(city)}
-                onMouseLeave={() => setHoveredCity(null)}
-                className='cursor-pointer'
+      <MapContainer>
+        <BackgroundMap src='/saudi-arabia-map.svg' alt='Saudi Arabia Map' />
+        <MapSVG viewBox='0 0 900 900'>
+          {renderEdges()}
+          {Object.entries(cityCoordinates).map(([city, coords]) => (
+            <g
+              key={city}
+              onMouseEnter={() => setHoveredCity(city)}
+              onMouseLeave={() => setHoveredCity(null)}
+              style={{ cursor: 'pointer' }}
+            >
+              <circle cx={coords.x} cy={coords.y} r={12} fill='transparent' />
+              <circle
+                cx={coords.x}
+                cy={coords.y}
+                r={hoveredCity === city ? 6 : 4}
+                fill={getVertexColor(city)}
+                style={{ transition: 'all 200ms' }}
+              />
+              <text
+                x={coords.x}
+                y={coords.y - 10}
+                textAnchor='middle'
+                style={{
+                  fontSize: '0.75rem',
+                  fontWeight: hoveredCity === city ? 'bold' : '500',
+                }}
               >
-                <circle
-                  cx={coords.x}
-                  cy={coords.y}
-                  r={12}
-                  fill='transparent'
-                  className='hover-target'
-                />
-                <circle
-                  cx={coords.x}
-                  cy={coords.y}
-                  r={hoveredCity === city ? 6 : 4}
-                  fill={getVertexColor(city)}
-                  className='transition-all duration-200'
-                />
-                <text
-                  x={coords.x}
-                  y={coords.y - 10}
-                  textAnchor='middle'
-                  className={`text-xs ${
-                    hoveredCity === city ? 'font-bold' : 'font-medium'
-                  }`}
-                >
-                  {city}
-                </text>
-              </g>
-            ))}
-          </svg>
-        </div>
-      </div>
+                {city}
+              </text>
+            </g>
+          ))}
+        </MapSVG>
+      </MapContainer>
 
-      <div className='mt-4 text-sm text-gray-600'>
+      <Legend>
         <p>Map Legend:</p>
-        <ul className='list-disc pl-5 mt-2'>
+        <LegendList>
           <li>Red vertex: Current location</li>
           <li>Green vertex: Destination (Thuwal)</li>
           <li>Blue vertices: Reachable cities</li>
           <li>Grey vertices: Currently unreachable cities</li>
           <li>Edge colors indicate travel conditions:</li>
-          <ul className='list-disc pl-5'>
+          <LegendList>
             <li>Blue: Normal speed (clear weather)</li>
             <li>Orange: Half speed (hot weather)</li>
             <li>Red: No travel possible (sandstorm)</li>
-          </ul>
-        </ul>
-      </div>
-    </div>
+          </LegendList>
+        </LegendList>
+      </Legend>
+    </Container>
   );
 };
 
