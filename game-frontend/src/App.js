@@ -4,13 +4,14 @@ import SampleDataComponent from './Components/SampleDataComponent';
 import TestMessageComponent from './Components/TestMessageComponent';
 import TestGameComponent from './Components/TestGameComponent';
 import MapGraph from './Components/MapGraph';
-
+import MainGame from './Components/MainGame';
 function App() {
   return (
     <div className='App'>
       <header className='App-header'>
         <h1>Shortest Path Game</h1>
-        <MapGraph />
+        <MainGame />
+        {/* <MapGraph /> */}
         <TestGameComponent />
         <TestMessageComponent />
         <SampleDataComponent />
