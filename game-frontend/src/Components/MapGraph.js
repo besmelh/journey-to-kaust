@@ -306,10 +306,10 @@ const MapGraph = ({ style }) => {
 
   // Get vertex color based on its state
   const getVertexColor = (city) => {
-    if (city === currentCity) return '#ef4444'; // Current city - Red
-    if (city === goalCity) return '#22c55e'; // Goal city - Green
-    if (getConnectedCities().has(city)) return '#3b82f6'; // Connected cities - Blue
-    return '#9ca3af'; // Unreachable cities - Grey
+    if (city === currentCity) return '#FF2075'; // Current city - Red
+    if (city === goalCity) return '#54ED39'; // Goal city - Green
+    if (getConnectedCities().has(city)) return '#47B5FF'; // Connected cities - Blue
+    return '#C5E2E0'; // Unreachable cities - Grey
   };
 
   // Get edge color based on its state and weather
@@ -324,7 +324,7 @@ const MapGraph = ({ style }) => {
         return `rgb(255, ${Math.floor(255 * (1 - normalizedWeight))}, 0)`; // Orange for hot
       return `rgb(0, ${Math.floor(255 * (1 - normalizedWeight))}, 255)`; // Blue for clear
     }
-    return '#9ca3af'; // Grey for unconnected edges
+    return '#C5E2E0'; // Grey for unconnected edges
   };
 
   const renderEdges = () => {
@@ -371,7 +371,7 @@ const MapGraph = ({ style }) => {
                 x2={end.x}
                 y2={end.y}
                 stroke={color}
-                strokeWidth={isHovered ? 3 : 1.5}
+                strokeWidth={isHovered ? 4 : 1.5}
                 className='transition-all duration-200'
               />
               {isHovered && (
@@ -424,7 +424,7 @@ const MapGraph = ({ style }) => {
             <circle
               cx={coords.x}
               cy={coords.y}
-              r={hoveredCity === city ? 6 : 4}
+              r={hoveredCity === city ? 12 : 6}
               fill={getVertexColor(city)}
               style={{ transition: 'all 200ms' }}
             />
@@ -433,7 +433,7 @@ const MapGraph = ({ style }) => {
               y={coords.y - 10}
               textAnchor='middle'
               style={{
-                fontSize: '0.75rem',
+                fontSize: hoveredCity === city ? '1rem' : '0.75rem',
                 fontWeight: hoveredCity === city ? 'bold' : '500',
               }}
             >
