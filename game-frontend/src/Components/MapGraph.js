@@ -32,10 +32,10 @@ const MapContainer = styled.div`
   width: 1000px;
   height: 900px;
   padding: 1rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  background: white;
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  //border: 1px solid #e5e7eb;
+  //border-radius: 0.5rem;
+  //background: white;
+  //box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -49,7 +49,7 @@ const BackgroundMap = styled.img`
   height: 900px;
   object-fit: fill;
   //inset: 0;
-  opacity: 0.1;
+  opacity: 0.9;
 `;
 
 const MapSVG = styled.svg`

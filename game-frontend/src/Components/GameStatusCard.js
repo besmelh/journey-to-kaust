@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import styled from '@emotion/styled';
 
 const Card = styled.div`
-  background: white;
+  background: rgba(250, 250, 250, 1);
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   padding: 24px;
@@ -14,7 +14,7 @@ const Title = styled.h2`
   color: #1a472a;
   font-size: 24px;
   font-weight: bold;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #b1b1b1;
   padding-bottom: 8px;
   margin-bottom: 16px;
   text-align: left;
@@ -27,10 +27,12 @@ const StatusRow = styled.div`
 `;
 
 const Label = styled.span`
+  font-size: 18px;
   color: #4b5563;
 `;
 
 const Value = styled.span`
+  font-size: 18px;
   margin-left: 8px;
   font-weight: 900;
   color: #4b5563;
@@ -68,9 +70,9 @@ const GreenButton = styled(Button)`
   }
 `;
 
-const GameStatusCard = () => {
+const GameStatusCard = ({ style }) => {
   return (
-    <Card>
+    <Card style={style}>
       <Title>Day #1</Title>
 
       <StatusRow>
