@@ -51,7 +51,7 @@ const MapSVG = styled.svg`
   position: absolute;
   inset: 0;
   width: 100%;
-  height: 100%;
+  height: 120%;
   left: 70px;
   top: -70px;
 `;
@@ -69,7 +69,7 @@ const LegendList = styled.ul`
 `;
 
 // Base speed in km/h for calculations
-const BASE_SPEED = 150;
+const BASE_SPEED = 200;
 
 // Use the normalized coordinates for consistency with Python code
 const baseCoordinates = {
