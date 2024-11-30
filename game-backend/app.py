@@ -1,12 +1,132 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+import random
+from Algorithm_Project_Dynamic_Weather_V3 import (
+    setup_graph, simulate_journey, generate_daily_weather,
+    WEATHER_SET, PROBABILITY_WEATHER, DAILY_HOURS
+)
 
 app = Flask(__name__)
 CORS(app)
 
+game_sessions = {}
+
 @app.route('/', methods=['GET'])
 def home():
     return "Welcome to the Shortest Path Game API!"
+
+
+# Randomly selects a starting city
+# Generates initial weather
+# Creates new game session with starting values
+# Returns initial game state
+@app.route('/api/init-game', methods=['POST'])
+def init_game():
+    session_id = request.json.get('session_id')
+    dict_graph, graph, weights, vertices, edges = setup_graph()
+    start_cities = [city for city in vertices if city != 'Thuwal']
+    start_city = random.choice(start_cities)
+    
+    # Generate current day's weather
+    daily_weather = generate_daily_weather(edges, WEATHER_SET, PROBABILITY_WEATHER)
+    
+    game_sessions[session_id] = {
+        'start_city': start_city,
+        'current_city': start_city,
+        'day': 1,
+        'hours_remaining': DAILY_HOURS,
+        'days_left': 29,
+        'visited_cities': [start_city],
+        'daily_weather': daily_weather,
+        'graph_state': dict_graph,
+        'edges': edges
+    }
+    
+    return jsonify({
+        'start_city': start_city,
+        'current_city': start_city,
+        'day': 1,
+        'hours_remaining': DAILY_HOURS,
+        'days_left': 29,
+        'weather': daily_weather,
+        'neighboring_cities': list(dict_graph[start_city].keys())
+    })
+
+
+# Validates if travel to destination is possible based on weather and hours
+# Updates player position and remaining hours if travel succeeds
+# Returns updated game state including whether travel was possible
+@app.route('/api/travel', methods=['POST'])
+def travel():
+    session_id = request.json.get('session_id')
+    destination = request.json.get('destination')
+    session = game_sessions[session_id]
+    
+    current_city = session['current_city']
+    distance = session['graph_state'][current_city][destination]
+    weather = session['daily_weather'][(current_city, destination)]
+    
+    # Use same speed calculations as algorithm
+    if weather == 'Sandstorm':
+        travel_possible = False
+    else:
+        speed = 100 if weather == 'Clear' else 50  # Match algorithm speeds
+        hours_needed = distance / speed
+        travel_possible = hours_needed <= session['hours_remaining']
+    
+    if travel_possible:
+        session['current_city'] = destination
+        session['hours_remaining'] -= hours_needed
+        session['visited_cities'].append(destination)
+    
+    return jsonify({
+        'current_city': session['current_city'],
+        'hours_remaining': session['hours_remaining'],
+        'weather': session['daily_weather'],
+        'neighboring_cities': list(session['graph_state'][session['current_city']].keys()),
+        'travel_possible': travel_possible
+    })
+
+
+# Advances to next day
+# Generates new weather
+# Resets daily hours
+# Returns new day's state
+@app.route('/api/wait', methods=['POST'])
+def wait():
+    session_id = request.json.get('session_id')
+    session = game_sessions[session_id]
+    
+    # Generate new weather just like algorithm
+    daily_weather = generate_daily_weather(session['edges'], WEATHER_SET, PROBABILITY_WEATHER)
+    
+    session['day'] += 1
+    session['days_left'] -= 1
+    session['hours_remaining'] = DAILY_HOURS
+    session['daily_weather'] = daily_weather
+    
+    return jsonify({
+        'day': session['day'],
+        'hours_remaining': DAILY_HOURS,
+        'days_left': session['days_left'],
+        'weather': daily_weather,
+        'neighboring_cities': list(session['graph_state'][session['current_city']].keys())
+    })
+
+
+
+# *******************************************
+
+@app.route('/api/game-status', methods=['GET'])
+def get_game_status():
+    return jsonify(game_state)
+
+@app.route('/api/graph-data', methods=['GET'])
+def get_graph_data():
+    return jsonify({
+        'currentCity': game_state['currentCity'],
+        'visitedCities': game_state['visitedCities']
+    })
 
 @app.route('/api/test', methods=['GET'])
 def test_route():
