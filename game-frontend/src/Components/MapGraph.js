@@ -29,31 +29,38 @@ const WeatherSelect = styled.select`
 
 const MapContainer = styled.div`
   position: relative;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  background: white;
+  width: 1000px;
+  height: 900px;
   padding: 1rem;
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-  height: 800px;
-  scale: 80%;
+  //border: 1px solid #e5e7eb;
+  //border-radius: 0.5rem;
+  //background: white;
+  //box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
 `;
 
 const BackgroundMap = styled.img`
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  opacity: 0.1;
+  //width: 100%;
+  //height: 100%;
+  width: 1000px;
+  height: 900px;
+  object-fit: fill;
+  //inset: 0;
+  opacity: 0.9;
 `;
 
 const MapSVG = styled.svg`
+  //position: relative;
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 120%;
-  left: 70px;
-  top: -70px;
+  /* width: 100%;
+  height: 100%; */
+  width: 1000px;
+  height: 900px;
+  viewbox: 0 0 800 700;
+  top: -20px;
 `;
 
 const Legend = styled.div`
@@ -69,7 +76,7 @@ const LegendList = styled.ul`
 `;
 
 // Base speed in km/h for calculations
-const BASE_SPEED = 200;
+const BASE_SPEED = 100;
 
 // Use the normalized coordinates for consistency with Python code
 const baseCoordinates = {
@@ -235,8 +242,8 @@ const SCALE_CONFIG = {
   xScale: 0.95, // Horizontal scaling factor
   yScale: 1.2, // Vertical scaling factor
   viewBox: {
-    width: 900,
-    height: 900,
+    width: 800,
+    height: 700,
   },
 };
 
@@ -254,7 +261,7 @@ const getScaledCoordinates = () => {
 
 const cityCoordinates = getScaledCoordinates();
 
-const MapGraph = () => {
+const MapGraph = ({ style }) => {
   const [weatherState, setWeatherState] = useState('clear');
   const [hoveredCity, setHoveredCity] = useState(null);
   const [hoveredEdge, setHoveredEdge] = useState(null);
@@ -299,10 +306,10 @@ const MapGraph = () => {
 
   // Get vertex color based on its state
   const getVertexColor = (city) => {
-    if (city === currentCity) return '#ef4444'; // Current city - Red
-    if (city === goalCity) return '#22c55e'; // Goal city - Green
-    if (getConnectedCities().has(city)) return '#3b82f6'; // Connected cities - Blue
-    return '#9ca3af'; // Unreachable cities - Grey
+    if (city === currentCity) return '#FF2075'; // Current city - Red
+    if (city === goalCity) return '#54ED39'; // Goal city - Green
+    if (getConnectedCities().has(city)) return '#47B5FF'; // Connected cities - Blue
+    return '#C5E2E0'; // Unreachable cities - Grey
   };
 
   // Get edge color based on its state and weather
@@ -317,7 +324,7 @@ const MapGraph = () => {
         return `rgb(255, ${Math.floor(255 * (1 - normalizedWeight))}, 0)`; // Orange for hot
       return `rgb(0, ${Math.floor(255 * (1 - normalizedWeight))}, 255)`; // Blue for clear
     }
-    return '#9ca3af'; // Grey for unconnected edges
+    return '#C5E2E0'; // Grey for unconnected edges
   };
 
   const renderEdges = () => {
@@ -364,7 +371,7 @@ const MapGraph = () => {
                 x2={end.x}
                 y2={end.y}
                 stroke={color}
-                strokeWidth={isHovered ? 3 : 1.5}
+                strokeWidth={isHovered ? 4 : 1.5}
                 className='transition-all duration-200'
               />
               {isHovered && (
@@ -389,70 +396,70 @@ const MapGraph = () => {
   };
 
   return (
-    <Container>
-      <Header>
-        <Title>Saudi Arabia Travel Map</Title>
-        <WeatherSelect
-          value={weatherState}
-          onChange={(e) => setWeatherState(e.target.value)}
-        >
-          <option value='clear'>Clear (x1 speed)</option>
-          <option value='hot'>Hot (x0.5 speed)</option>
-          <option value='sandstorm'>Sandstorm (x0 speed)</option>
-        </WeatherSelect>
-      </Header>
+    // <Container>
+    //   <Header>
+    //     <Title>Saudi Arabia Travel Map</Title>
+    //     <WeatherSelect
+    //       value={weatherState}
+    //       onChange={(e) => setWeatherState(e.target.value)}
+    //     >
+    //       <option value='clear'>Clear (x1 speed)</option>
+    //       <option value='hot'>Hot (x0.5 speed)</option>
+    //       <option value='sandstorm'>Sandstorm (x0 speed)</option>
+    //     </WeatherSelect>
+    //   </Header>
 
-      <MapContainer>
-        <BackgroundMap src='/saudi-arabia-map.svg' alt='Saudi Arabia Map' />
-        <MapSVG>
-          {renderEdges()}
-          {Object.entries(cityCoordinates).map(([city, coords]) => (
-            <g
-              key={city}
-              onMouseEnter={() => setHoveredCity(city)}
-              onMouseLeave={() => setHoveredCity(null)}
-              style={{ cursor: 'pointer' }}
+    <MapContainer style={style}>
+      <BackgroundMap src='/saudi-arabia-map.svg' alt='Saudi Arabia Map' />
+      <MapSVG>
+        {renderEdges()}
+        {Object.entries(cityCoordinates).map(([city, coords]) => (
+          <g
+            key={city}
+            onMouseEnter={() => setHoveredCity(city)}
+            onMouseLeave={() => setHoveredCity(null)}
+            style={{ cursor: 'pointer' }}
+          >
+            <circle cx={coords.x} cy={coords.y} r={12} fill='transparent' />
+            <circle
+              cx={coords.x}
+              cy={coords.y}
+              r={hoveredCity === city ? 12 : 6}
+              fill={getVertexColor(city)}
+              style={{ transition: 'all 200ms' }}
+            />
+            <text
+              x={coords.x}
+              y={coords.y - 10}
+              textAnchor='middle'
+              style={{
+                fontSize: hoveredCity === city ? '1rem' : '0.75rem',
+                fontWeight: hoveredCity === city ? 'bold' : '500',
+              }}
             >
-              <circle cx={coords.x} cy={coords.y} r={12} fill='transparent' />
-              <circle
-                cx={coords.x}
-                cy={coords.y}
-                r={hoveredCity === city ? 6 : 4}
-                fill={getVertexColor(city)}
-                style={{ transition: 'all 200ms' }}
-              />
-              <text
-                x={coords.x}
-                y={coords.y - 10}
-                textAnchor='middle'
-                style={{
-                  fontSize: '0.75rem',
-                  fontWeight: hoveredCity === city ? 'bold' : '500',
-                }}
-              >
-                {city}
-              </text>
-            </g>
-          ))}
-        </MapSVG>
-      </MapContainer>
+              {city}
+            </text>
+          </g>
+        ))}
+      </MapSVG>
+    </MapContainer>
 
-      <Legend>
-        <p>Map Legend:</p>
-        <LegendList>
-          <li>Red vertex: Current location</li>
-          <li>Green vertex: Destination (Thuwal)</li>
-          <li>Blue vertices: Reachable cities</li>
-          <li>Grey vertices: Currently unreachable cities</li>
-          <li>Edge colors indicate travel conditions:</li>
-          <LegendList>
-            <li>Blue: Normal speed (clear weather)</li>
-            <li>Orange: Half speed (hot weather)</li>
-            <li>Red: No travel possible (sandstorm)</li>
-          </LegendList>
-        </LegendList>
-      </Legend>
-    </Container>
+    //   <Legend>
+    //     <p>Map Legend:</p>
+    //     <LegendList>
+    //       <li>Red vertex: Current location</li>
+    //       <li>Green vertex: Destination (Thuwal)</li>
+    //       <li>Blue vertices: Reachable cities</li>
+    //       <li>Grey vertices: Currently unreachable cities</li>
+    //       <li>Edge colors indicate travel conditions:</li>
+    //       <LegendList>
+    //         <li>Blue: Normal speed (clear weather)</li>
+    //         <li>Orange: Half speed (hot weather)</li>
+    //         <li>Red: No travel possible (sandstorm)</li>
+    //       </LegendList>
+    //     </LegendList>
+    //   </Legend>
+    // </Container>
   );
 };
 
