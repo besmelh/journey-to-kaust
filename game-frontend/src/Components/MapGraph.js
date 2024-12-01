@@ -76,7 +76,7 @@ const LegendList = styled.ul`
 `;
 
 // Base speed in km/h for calculations
-const BASE_SPEED = 200;
+const BASE_SPEED = 100;
 
 // Use the normalized coordinates for consistency with Python code
 const baseCoordinates = {
