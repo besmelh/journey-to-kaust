@@ -348,15 +348,17 @@ const MapGraph = ({ style, gameState, onCitySelect, selectedCity }) => {
               onMouseEnter={() => setHoveredEdge(pairKey)}
               onMouseLeave={() => setHoveredEdge(null)}
             >
+              {/* Invisible wider line for hover detection */}
               <line
                 x1={start.x}
                 y1={start.y}
                 x2={end.x}
                 y2={end.y}
                 stroke='transparent'
-                strokeWidth={10}
-                className='cursor-pointer'
+                strokeWidth={15}
+                // style={{ cursor: 'pointer' }}
               />
+              {/* Visible line */}
               <line
                 x1={start.x}
                 y1={start.y}
@@ -366,15 +368,6 @@ const MapGraph = ({ style, gameState, onCitySelect, selectedCity }) => {
                 strokeWidth={isHovered ? 4 : 1.5}
                 className='transition-all duration-200'
               />
-              {/* {isHovered &&
-                renderEdgePopup(
-                  city1,
-                  city2,
-                  weight,
-                  getEdgeWeather(city1, city2),
-                  (start.x + end.x) / 2,
-                  (start.y + end.y) / 2 - 50
-                )} */}
             </g>
           );
         })
@@ -382,51 +375,17 @@ const MapGraph = ({ style, gameState, onCitySelect, selectedCity }) => {
       .filter(Boolean);
   };
 
-  // const renderEdgePopup = (city1, city2, weight, weather, x, y) => {
-  //   const speed = weather === 'Clear' ? 100 : weather === 'Hot' ? 50 : 0;
-  //   const travelTime =
-  //     speed === 0 ? 'N/A' : `${Math.floor(weight / speed)} hour`;
-
-  //   return (
-  //     <g transform={`translate(${x} ${y})`}>
-  //       <rect
-  //         x='-120'
-  //         y='-50'
-  //         width='240'
-  //         height='100'
-  //         fill='#B2D9B7'
-  //         fillOpacity='0.9'
-  //         rx='4'
-  //         filter='drop-shadow(0 2px 2px rgba(0, 0, 0, 0.25))'
-  //         zIndex='100'
-  //       />
-  //       <text
-  //         y='-20'
-  //         textAnchor='middle'
-  //         fill='#065f46'
-  //         fontSize='18px'
-  //         fontWeight='bold'
-  //       >
-  //         {`${city1} - ${city2}`}
-  //       </text>
-  //       <text y='5' textAnchor='middle' fill='#065f46' fontSize='16px'>
-  //         {`Weather: ${weather}`}
-  //       </text>
-  //       <text y='25' textAnchor='middle' fill='#065f46' fontSize='16px'>
-  //         {`Travel time: ${travelTime}`}
-  //       </text>
-  //     </g>
-  //   );
-  // };
-
   const EdgePopup = ({ city1, city2, weight, weather, x, y }) => {
+    const speed = weather === 'Clear' ? 100 : weather === 'Hot' ? 50 : 0;
+    const travelTime =
+      speed === 0 ? 'N/A' : `${Math.floor(weight / speed)} hour`;
     return (
-      <g transform={`translate(${x} ${y})`}>
+      <g transform={`translate(${x} ${y})`} pointerEvents='none'>
         <rect
           x='-120'
-          y='-50'
+          y='-55'
           width='240'
-          height='100'
+          height='110'
           fill='#B2D9B7'
           fillOpacity='0.9'
           rx='4'
@@ -434,7 +393,7 @@ const MapGraph = ({ style, gameState, onCitySelect, selectedCity }) => {
           zIndex='100'
         />
         <text
-          y='-20'
+          y='-25'
           textAnchor='middle'
           fill='#065f46'
           fontSize='18px'
@@ -442,12 +401,15 @@ const MapGraph = ({ style, gameState, onCitySelect, selectedCity }) => {
         >
           {`${city1} - ${city2}`}
         </text>
-        <text y='5' textAnchor='middle' fill='#065f46' fontSize='16px'>
+        <text y='0' textAnchor='middle' fill='#065f46' fontSize='16px'>
           {`Weather: ${weather}`}
         </text>
-        {/* <text y='25' textAnchor='middle' fill='#065f46' fontSize='16px'>
+        <text y='20' textAnchor='middle' fill='#065f46' fontSize='16px'>
+          {`Speed: ${speed}`}
+        </text>
+        <text y='40' textAnchor='middle' fill='#065f46' fontSize='16px'>
           {`Travel time: ${travelTime}`}
-        </text> */}
+        </text>
       </g>
     );
   };
@@ -483,6 +445,7 @@ const MapGraph = ({ style, gameState, onCitySelect, selectedCity }) => {
                   ? 'text-base font-bold'
                   : 'text-sm font-medium'
               }`}
+              fontSize='14px'
             >
               {city}
             </text>
