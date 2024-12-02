@@ -79,28 +79,28 @@ const GameStatusCard = ({
   onWait,
   style,
 }) => {
-  const [gameStatus, setGameStatus] = useState({
-    day: 1,
-    hoursRemaining: 5,
-    daysLeft: 29,
-    weather: 'Clear',
-    speed: 100,
-    currentCity: '',
-  });
+  // const [gameStatus, setGameStatus] = useState({
+  //   day: 1,
+  //   hoursRemaining: 5,
+  //   daysLeft: 29,
+  //   weather: 'Clear',
+  //   speed: 100,
+  //   currentCity: '',
+  // });
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetchGameStatus();
-  }, []);
+  // useEffect(() => {
+  //   fetchGameStatus();
+  // }, []);
 
-  const fetchGameStatus = async () => {
-    try {
-      const status = await gameApi.getGameStatus();
-      setGameStatus(status);
-    } catch (error) {
-      console.error('Failed to fetch game status:', error);
-    }
-  };
+  // const fetchGameStatus = async () => {
+  //   try {
+  //     const status = await gameApi.getGameStatus();
+  //     setGameStatus(status);
+  //   } catch (error) {
+  //     console.error('Failed to fetch game status:', error);
+  //   }
+  // };
 
   // const handleTravel = async () => {
   //   if (!selectedCity || loading) return;
@@ -160,7 +160,7 @@ const GameStatusCard = ({
     //   variant: 'green'
     // };
 
-    if (gameStatus.requiredHours > gameStatus.hoursRemaining) {
+    if (gameState.requiredHours > gameState.hoursRemaining) {
       return {
         text: `${selectedCity} cannot be reached today`,
         disabled: true,
@@ -179,31 +179,21 @@ const GameStatusCard = ({
 
   return (
     <Card style={style}>
-      <Title>Day #{gameStatus.day}</Title>
+      <Title>Day #{gameState.day}</Title>
 
       <StatusRow>
         <Label>Travel hours remaining:</Label>
-        <Value>{gameStatus.hoursRemaining}</Value>
+        <Value>{gameState.hoursRemaining}</Value>
       </StatusRow>
 
       <StatusRow>
         <Label>Days left:</Label>
-        <Value>{gameStatus.daysLeft}</Value>
-      </StatusRow>
-
-      <StatusRow>
-        <Label>Weather:</Label>
-        <Value>{gameStatus.weather}</Value>
-      </StatusRow>
-
-      <StatusRow>
-        <Label>Car speed:</Label>
-        <Value>{gameStatus.speed} km/h</Value>
+        <Value>{gameState.daysLeft}</Value>
       </StatusRow>
 
       <StatusRow>
         <Label>Current city:</Label>
-        <Value>{gameStatus.currentCity}</Value>
+        <Value>{gameState.currentCity}</Value>
       </StatusRow>
 
       <ButtonContainer>

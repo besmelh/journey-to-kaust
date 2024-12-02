@@ -410,7 +410,7 @@ const MapGraph = ({ style, gameState, onCitySelect, selectedCity }) => {
 
   return (
     <MapContainer style={style}>
-      <h1>city: {gameState.currentCity}</h1>
+      {/* <h1>city: {gameState.currentCity}</h1> */}
       <BackgroundMap src='/saudi-arabia-map.svg' alt='Saudi Arabia Map' />
       <MapSVG>
         {renderEdges(gameState)}
