@@ -2,40 +2,16 @@ import React, { useEffect, useState } from 'react';
 
 import styled from '@emotion/styled';
 
-const Container = styled.div`
-  width: 100%;
-  max-width: 72rem;
-  margin: 0 auto;
-  padding: 1rem;
-`;
-
-const Header = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-`;
-
-const Title = styled.h2`
-  font-size: 1.25rem;
-  font-weight: bold;
-`;
-
-const WeatherSelect = styled.select`
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.375rem;
-`;
+const RED = '#FF2075';
+const GREEN = '#54ED39';
+const PURPLE = '#a855f7';
+const GREY = '#C5E2E0';
 
 const MapContainer = styled.div`
   position: relative;
   width: 1000px;
   height: 900px;
   padding: 1rem;
-  //border: 1px solid #e5e7eb;
-  //border-radius: 0.5rem;
-  //background: white;
-  //box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -63,16 +39,16 @@ const MapSVG = styled.svg`
   top: -20px;
 `;
 
-const Legend = styled.div`
-  margin-top: 1rem;
-  font-size: 0.875rem;
-  color: #4b5563;
-`;
-
-const LegendList = styled.ul`
-  list-style-type: disc;
-  padding-left: 1.25rem;
-  margin-top: 0.5rem;
+const EdgePopup = styled.div`
+  background: red;
+  border: 1px solid #22c55e;
+  border-radius: 4px;
+  padding: 8px;
+  position: absolute;
+  font-size: 14px;
+  color: #065f46;
+  line-height: 1.5;
+  pointer-events: none;
 `;
 
 // Base speed in km/h for calculations
@@ -262,29 +238,24 @@ const getScaledCoordinates = () => {
 const cityCoordinates = getScaledCoordinates();
 
 const MapGraph = ({ style, gameState, onCitySelect, selectedCity }) => {
-  const [weatherState, setWeatherState] = useState('clear');
+  //const [weatherState, setWeatherState] = useState('clear');
   const [hoveredCity, setHoveredCity] = useState(null);
   const [hoveredEdge, setHoveredEdge] = useState(null);
   //const [currentCity, setCurrentCity] = useState('Hail');
   const goalCity = 'Thuwal';
 
   // Rest of your component logic remains the same
-  const speedMultipliers = {
-    clear: 1,
-    hot: 0.5,
-    sandstorm: 0,
+  const SPEED_MULTIPLIERS = {
+    Hot: 0.5,
+    Clear: 1,
+    Sandstorm: 0,
   };
 
-  // Your existing helper functions remain the same
-  const calculateTravelTime = (distanceKm, speedMultiplier) => {
-    if (speedMultiplier === 0) return Infinity;
-    const speed = BASE_SPEED * speedMultiplier;
-    return distanceKm / speed;
-  };
-
-  const formatDuration = (weightInKm, speedMultiplier) => {
+  const formatTravelTime = (weight, weather) => {
+    const speedMultiplier = SPEED_MULTIPLIERS[weather];
     if (speedMultiplier === 0) return 'No travel possible';
-    const timeInHours = calculateTravelTime(weightInKm, speedMultiplier);
+
+    const timeInHours = weight / (BASE_SPEED * speedMultiplier);
     const hours = Math.floor(timeInHours);
     const minutes = Math.round((timeInHours - hours) * 60);
     return `${hours}h ${minutes}m`;
@@ -308,56 +279,75 @@ const MapGraph = ({ style, gameState, onCitySelect, selectedCity }) => {
 
   // Get vertex color based on its state
   const getVertexColor = (city) => {
-    if (city === gameState.currentCity) return '#FF2075'; // Current city - Red
-    if (city === goalCity) return '#54ED39'; // Goal city - Green
-    if (gameState.visitedCities.includes(city)) return '#a855f7';
+    if (city === gameState.currentCity) return RED; // Current city - Red
+    if (city === goalCity) return GREEN; // Goal city - Green
+    if (gameState.visitedCities.includes(city)) return PURPLE;
     if (gameState.neighboringCities.includes(city)); // Connected cities - Blue
-    return '#C5E2E0'; // Unreachable cities - Grey
+    return GREY; // Unreachable cities - Grey
+  };
+
+  const getEdgeWeather = (city1, city2) => {
+    const edgeKey = `${city1}-${city2}`;
+    const reverseEdgeKey = `${city2}-${city1}`;
+    return (
+      gameState.daily_weather?.[edgeKey]?.weather ||
+      gameState.daily_weather?.[reverseEdgeKey]?.weather ||
+      'Clear'
+    );
   };
 
   // Get edge color based on its state and weather
-  const getEdgeColor = (city1, city2, weight, speedMultiplier) => {
+  const getEdgeColor = (city1, city2, weight) => {
+    const weather = getEdgeWeather(city1, city2);
+    const speedMultiplier = SPEED_MULTIPLIERS[weather];
     const isConnectedToCurrentCity =
       city1 === gameState.currentCity || city2 === gameState.currentCity;
     const normalizedWeight = Math.min(weight / 800, 1);
 
-    if (speedMultiplier === 0) return 'rgb(255, 0, 0)'; // Blocked roads
+    if (speedMultiplier === 0) return 'rgb(255, 0, 0)'; // Sandstorm - Red
     if (isConnectedToCurrentCity) {
-      if (speedMultiplier === 0.5)
-        return `rgb(255, ${Math.floor(255 * (1 - normalizedWeight))}, 0)`; // Orange for hot
-      return `rgb(0, ${Math.floor(255 * (1 - normalizedWeight))}, 255)`; // Blue for clear
+      if (weather === 'Hot')
+        return `rgb(255, ${Math.floor(255 * (1 - normalizedWeight))}, 0)`; // Hot - Orange
+      return `rgb(0, ${Math.floor(255 * (1 - normalizedWeight))}, 255)`; // Clear - Blue
     }
-    return '#C5E2E0'; // Grey for unconnected edges
+    return GREY; // Unconnected - Grey
+  };
+
+  const isClickable = (city) => {
+    return gameState.neighboringCities?.includes(city);
+  };
+
+  const handleCityClick = (city) => {
+    if (isClickable(city)) {
+      onCitySelect(city);
+    }
   };
 
   const renderEdges = () => {
-    const renderedEdges = [];
-    const processedPairs = new Set();
-    //const connectedCities = getConnectedCities();
+    const renderedEdges = new Set();
+    const edges = gameState.graph_state || {};
 
-    Object.entries(edges).forEach(([city1, connections]) => {
-      Object.entries(connections).forEach(([city2, weight]) => {
-        const pairKey = [city1, city2].sort().join('-');
-        if (!processedPairs.has(pairKey)) {
-          processedPairs.add(pairKey);
+    return Object.entries(edges)
+      .flatMap(([city1, connections]) =>
+        Object.entries(connections).map(([city2, weight]) => {
+          const pairKey = [city1, city2].sort().join('-');
+          if (renderedEdges.has(pairKey)) return null;
+          renderedEdges.add(pairKey);
 
           const start = cityCoordinates[city1];
           const end = cityCoordinates[city2];
-          const isHovered = hoveredEdge === pairKey;
-          const color = getEdgeColor(
-            city1,
-            city2,
-            weight,
-            speedMultipliers[weatherState]
-          );
+          if (!start || !end) return null;
 
-          renderedEdges.push(
+          const weather = getEdgeWeather(city1, city2);
+          const isHovered = hoveredEdge === pairKey;
+          const color = getEdgeColor(city1, city2, weight);
+
+          return (
             <g
               key={pairKey}
               onMouseEnter={() => setHoveredEdge(pairKey)}
               onMouseLeave={() => setHoveredEdge(null)}
             >
-              {/* Invisible wider line for easier hovering */}
               <line
                 x1={start.x}
                 y1={start.y}
@@ -367,7 +357,6 @@ const MapGraph = ({ style, gameState, onCitySelect, selectedCity }) => {
                 strokeWidth={10}
                 className='cursor-pointer'
               />
-              {/* Visible line */}
               <line
                 x1={start.x}
                 y1={start.y}
@@ -377,75 +366,88 @@ const MapGraph = ({ style, gameState, onCitySelect, selectedCity }) => {
                 strokeWidth={isHovered ? 4 : 1.5}
                 className='transition-all duration-200'
               />
-              {isHovered && (
-                <text
-                  x={(start.x + end.x) / 2}
-                  y={(start.y + end.y) / 2 - 10}
-                  textAnchor='middle'
-                  fill='black'
-                  className='text-xs font-medium'
-                >
-                  {weight}km -{' '}
-                  {formatDuration(weight, speedMultipliers[weatherState])}
-                </text>
-              )}
+              {isHovered &&
+                renderEdgePopup(
+                  city1,
+                  city2,
+                  weight,
+                  getEdgeWeather(city1, city2),
+                  (start.x + end.x) / 2,
+                  (start.y + end.y) / 2 - 50
+                )}
             </g>
           );
-        }
-      });
-    });
-
-    return renderedEdges;
+        })
+      )
+      .filter(Boolean);
   };
 
-  const isClickable = (city) => {
-    return gameState.neighboringCities.includes(city);
-  };
+  const renderEdgePopup = (city1, city2, weight, weather, x, y) => {
+    const speed = weather === 'Clear' ? 100 : weather === 'Hot' ? 50 : 0;
+    const travelTime =
+      speed === 0 ? 'N/A' : `${Math.floor(weight / speed)} hour`;
 
-  const handleCityClick = (city) => {
-    if (isClickable(city)) {
-      onCitySelect(city);
-    }
+    return (
+      <g transform={`translate(${x} ${y})`}>
+        <rect
+          x='-120'
+          y='-50'
+          width='240'
+          height='100'
+          fill='#B2D9B7'
+          fillOpacity='0.9'
+          rx='4'
+          filter='drop-shadow(0 2px 2px rgba(0, 0, 0, 0.25))'
+        />
+        <text
+          y='-20'
+          textAnchor='middle'
+          fill='#065f46'
+          fontSize='18px'
+          fontWeight='bold'
+        >
+          {`${city1} - ${city2}`}
+        </text>
+        <text y='5' textAnchor='middle' fill='#065f46' fontSize='16px'>
+          {`Weather: ${weather}`}
+        </text>
+        <text y='25' textAnchor='middle' fill='#065f46' fontSize='16px'>
+          {`Travel time: ${travelTime}`}
+        </text>
+      </g>
+    );
   };
-
   return (
     <MapContainer style={style}>
-      {/* <h1>city: {gameState.currentCity}</h1> */}
       <BackgroundMap src='/saudi-arabia-map.svg' alt='Saudi Arabia Map' />
       <MapSVG>
-        {renderEdges(gameState)}
+        {renderEdges()}
         {Object.entries(cityCoordinates).map(([city, coords]) => (
-          // <g
-          //   key={city}
-          //   onMouseEnter={() => setHoveredCity(city)}
-          //   onMouseLeave={() => setHoveredCity(null)}
-          //   style={{ cursor: 'pointer' }}
-          // >
           <g
             key={city}
-            onClick={() => handleCityClick(city)}
+            onClick={() => isClickable(city) && onCitySelect(city)}
+            onMouseEnter={() => setHoveredCity(city)}
+            onMouseLeave={() => setHoveredCity(null)}
             style={{ cursor: isClickable(city) ? 'pointer' : 'default' }}
           >
-            <circle cx={coords.x} cy={coords.y} r={12} fill='transparent' />
             <circle
               cx={coords.x}
               cy={coords.y}
               r={hoveredCity === city ? 12 : 6}
               fill={getVertexColor(city)}
-              style={{
-                transition: 'all 200ms',
-                stroke: selectedCity === city ? '#000' : 'none',
-                strokeWidth: 2,
-              }}
+              className='transition-all duration-200'
+              stroke={selectedCity === city ? '#000' : 'none'}
+              strokeWidth={2}
             />
             <text
               x={coords.x}
               y={coords.y - 10}
               textAnchor='middle'
-              style={{
-                fontSize: hoveredCity === city ? '1rem' : '0.75rem',
-                fontWeight: hoveredCity === city ? 'bold' : '500',
-              }}
+              className={`transition-all duration-200 ${
+                hoveredCity === city
+                  ? 'text-base font-bold'
+                  : 'text-sm font-medium'
+              }`}
             >
               {city}
             </text>
