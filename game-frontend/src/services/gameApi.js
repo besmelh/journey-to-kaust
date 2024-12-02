@@ -15,7 +15,8 @@ export const gameApi = {
         const error = await response.json();
         throw new Error(error.message || 'Failed to init game');
       }
-      return response;
+      const jsonData = await response.json();
+      return jsonData;
     } catch (error) {
       console.error('Init game error:', error);
       throw error;

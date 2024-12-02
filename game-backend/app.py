@@ -96,11 +96,14 @@ def home():
 
 @app.route('/api/init-game', methods=['POST'])
 def init_game():
+    print("running init-game...")
     session_id = request.json.get('session_id')
+    print("session_id: ", session_id)
     dict_graph, graph, weights, vertices, edges = setup_graph()
     start_cities = [city for city in vertices if city != 'Thuwal']
     start_city = random.choice(start_cities)
-    
+    print("start_city: ", start_city)
+
     # Generate weather for each road
     daily_weather = {}
     for city1, connections in dict_graph.items():
@@ -111,8 +114,8 @@ def init_game():
                 'weather': weather,
                 'speed': speed
             }
-    
-    game_sessions[session_id] = {
+
+    data = {
         'start_city': start_city,
         'current_city': start_city,
         'day': 1,
@@ -122,15 +125,9 @@ def init_game():
         'graph_state': dict_graph,
     }
     
-    return jsonify({
-        'start_city': start_city,
-        'current_city': start_city,
-        'day': 1,
-        'hours_remaining': DAILY_HOURS,
-        'days_left': 29,
-        'weather': daily_weather,
-        'neighboring_cities': list(dict_graph[start_city].keys())
-    })
+    game_sessions[session_id] = data
+    print("data: ", data)
+    return jsonify(data)
 
 @app.route('/api/game-status', methods=['GET'])
 def get_game_status():
