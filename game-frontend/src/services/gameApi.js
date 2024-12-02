@@ -1,6 +1,28 @@
 const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:5000';
+// const API_URL = '/api';
 
 export const gameApi = {
+  async initGame(data) {
+    try {
+      const response = await fetch(`${API_URL}/api/init-game`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to init game');
+      }
+      const jsonData = await response.json();
+      return jsonData;
+    } catch (error) {
+      console.error('Init game error:', error);
+      throw error;
+    }
+  },
+
   // Get current game status
   async getGameStatus() {
     const response = await fetch(`${API_URL}/api/game-status`);
