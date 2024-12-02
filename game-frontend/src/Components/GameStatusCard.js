@@ -72,7 +72,13 @@ const GreenButton = styled(Button)`
 
 //const GameStatusCard = ({ style }) => {
 
-const GameStatusCard = ({ style, onCitySelect, selectedCity }) => {
+const GameStatusCard = ({
+  gameState,
+  selectedCity,
+  onTravel,
+  onWait,
+  style,
+}) => {
   const [gameStatus, setGameStatus] = useState({
     day: 1,
     hoursRemaining: 5,
@@ -96,34 +102,34 @@ const GameStatusCard = ({ style, onCitySelect, selectedCity }) => {
     }
   };
 
-  const handleTravel = async () => {
-    if (!selectedCity || loading) return;
+  // const handleTravel = async () => {
+  //   if (!selectedCity || loading) return;
 
-    setLoading(true);
-    try {
-      const result = await gameApi.travelToCity(selectedCity);
-      setGameStatus(result);
-      onCitySelect(null); // Reset selection after travel
-    } catch (error) {
-      console.error('Failed to travel:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  //   setLoading(true);
+  //   try {
+  //     const result = await gameApi.travelToCity(selectedCity);
+  //     setGameStatus(result);
+  //     onCitySelect(null); // Reset selection after travel
+  //   } catch (error) {
+  //     console.error('Failed to travel:', error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
-  const handleWait = async () => {
-    if (loading) return;
+  // const handleWait = async () => {
+  //   if (loading) return;
 
-    setLoading(true);
-    try {
-      const result = await gameApi.waitInCity();
-      setGameStatus(result);
-    } catch (error) {
-      console.error('Failed to wait:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  //   setLoading(true);
+  //   try {
+  //     const result = await gameApi.waitInCity();
+  //     setGameStatus(result);
+  //   } catch (error) {
+  //     console.error('Failed to wait:', error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   const getTravelButtonProps = () => {
     if (!selectedCity) {
@@ -133,6 +139,26 @@ const GameStatusCard = ({ style, onCitySelect, selectedCity }) => {
         variant: 'gray',
       };
     }
+
+    // const edge = gameState.currentCity in edges ? edges[gameState.currentCity][selectedCity] : null;
+    // if (!edge) return { text: 'Invalid route', disabled: true, variant: 'gray' };
+
+    // const speed = speedMultipliers[gameState.weather.toLowerCase()] * BASE_SPEED;
+    // const requiredHours = edge / speed;
+
+    // if (requiredHours > gameState.hoursRemaining) {
+    //   return {
+    //     text: `Cannot reach ${selectedCity} today`,
+    //     disabled: true,
+    //     variant: 'gray'
+    //   };
+    // }
+
+    // return {
+    //   text: `Travel to ${selectedCity}`,
+    //   disabled: false,
+    //   variant: 'green'
+    // };
 
     if (gameStatus.requiredHours > gameStatus.hoursRemaining) {
       return {
@@ -175,21 +201,23 @@ const GameStatusCard = ({ style, onCitySelect, selectedCity }) => {
         <Value>{gameStatus.speed} km/h</Value>
       </StatusRow>
 
+      <StatusRow>
+        <Label>Current city:</Label>
+        <Value>{gameStatus.currentCity}</Value>
+      </StatusRow>
+
       <ButtonContainer>
         {travelButtonProps.variant === 'gray' ? (
           <GrayButton disabled={travelButtonProps.disabled}>
             {travelButtonProps.text}
           </GrayButton>
         ) : (
-          <GreenButton
-            onClick={handleTravel}
-            disabled={travelButtonProps.disabled}
-          >
+          <GreenButton onClick={onTravel} disabled={travelButtonProps.disabled}>
             {travelButtonProps.text}
           </GreenButton>
         )}
-        <GreenButton onClick={handleWait}>
-          Wait in {gameStatus.currentCity}
+        <GreenButton onClick={onWait}>
+          Wait in {gameState.currentCity}
         </GreenButton>
       </ButtonContainer>
     </Card>

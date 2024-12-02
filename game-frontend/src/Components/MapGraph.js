@@ -261,11 +261,11 @@ const getScaledCoordinates = () => {
 
 const cityCoordinates = getScaledCoordinates();
 
-const MapGraph = ({ style }) => {
+const MapGraph = ({ style, gameState, onCitySelect, selectedCity }) => {
   const [weatherState, setWeatherState] = useState('clear');
   const [hoveredCity, setHoveredCity] = useState(null);
   const [hoveredEdge, setHoveredEdge] = useState(null);
-  const [currentCity, setCurrentCity] = useState('Hail');
+  //const [currentCity, setCurrentCity] = useState('Hail');
   const goalCity = 'Thuwal';
 
   // Rest of your component logic remains the same
@@ -293,11 +293,13 @@ const MapGraph = ({ style }) => {
   // Get connected cities to current city
   const getConnectedCities = () => {
     const connected = new Set();
-    if (edges[currentCity]) {
-      Object.keys(edges[currentCity]).forEach((city) => connected.add(city));
+    if (edges[gameState.currentCity]) {
+      Object.keys(edges[gameState.currentCity]).forEach((city) =>
+        connected.add(city)
+      );
     }
     Object.entries(edges).forEach(([city, connections]) => {
-      if (connections[currentCity]) {
+      if (connections[gameState.currentCity]) {
         connected.add(city);
       }
     });
@@ -306,16 +308,17 @@ const MapGraph = ({ style }) => {
 
   // Get vertex color based on its state
   const getVertexColor = (city) => {
-    if (city === currentCity) return '#FF2075'; // Current city - Red
+    if (city === gameState.currentCity) return '#FF2075'; // Current city - Red
     if (city === goalCity) return '#54ED39'; // Goal city - Green
-    if (getConnectedCities().has(city)) return '#47B5FF'; // Connected cities - Blue
+    if (gameState.visitedCities.includes(city)) return '#a855f7';
+    if (gameState.neighboringCities.includes(city)); // Connected cities - Blue
     return '#C5E2E0'; // Unreachable cities - Grey
   };
 
   // Get edge color based on its state and weather
   const getEdgeColor = (city1, city2, weight, speedMultiplier) => {
     const isConnectedToCurrentCity =
-      city1 === currentCity || city2 === currentCity;
+      city1 === gameState.currentCity || city2 === gameState.currentCity;
     const normalizedWeight = Math.min(weight / 800, 1);
 
     if (speedMultiplier === 0) return 'rgb(255, 0, 0)'; // Blocked roads
@@ -395,30 +398,33 @@ const MapGraph = ({ style }) => {
     return renderedEdges;
   };
 
-  return (
-    // <Container>
-    //   <Header>
-    //     <Title>Saudi Arabia Travel Map</Title>
-    //     <WeatherSelect
-    //       value={weatherState}
-    //       onChange={(e) => setWeatherState(e.target.value)}
-    //     >
-    //       <option value='clear'>Clear (x1 speed)</option>
-    //       <option value='hot'>Hot (x0.5 speed)</option>
-    //       <option value='sandstorm'>Sandstorm (x0 speed)</option>
-    //     </WeatherSelect>
-    //   </Header>
+  const isClickable = (city) => {
+    return gameState.neighboringCities.includes(city);
+  };
 
+  const handleCityClick = (city) => {
+    if (isClickable(city)) {
+      onCitySelect(city);
+    }
+  };
+
+  return (
     <MapContainer style={style}>
+      <h1>city: {gameState.currentCity}</h1>
       <BackgroundMap src='/saudi-arabia-map.svg' alt='Saudi Arabia Map' />
       <MapSVG>
-        {renderEdges()}
+        {renderEdges(gameState)}
         {Object.entries(cityCoordinates).map(([city, coords]) => (
+          // <g
+          //   key={city}
+          //   onMouseEnter={() => setHoveredCity(city)}
+          //   onMouseLeave={() => setHoveredCity(null)}
+          //   style={{ cursor: 'pointer' }}
+          // >
           <g
             key={city}
-            onMouseEnter={() => setHoveredCity(city)}
-            onMouseLeave={() => setHoveredCity(null)}
-            style={{ cursor: 'pointer' }}
+            onClick={() => handleCityClick(city)}
+            style={{ cursor: isClickable(city) ? 'pointer' : 'default' }}
           >
             <circle cx={coords.x} cy={coords.y} r={12} fill='transparent' />
             <circle
@@ -426,7 +432,11 @@ const MapGraph = ({ style }) => {
               cy={coords.y}
               r={hoveredCity === city ? 12 : 6}
               fill={getVertexColor(city)}
-              style={{ transition: 'all 200ms' }}
+              style={{
+                transition: 'all 200ms',
+                stroke: selectedCity === city ? '#000' : 'none',
+                strokeWidth: 2,
+              }}
             />
             <text
               x={coords.x}
@@ -443,23 +453,6 @@ const MapGraph = ({ style }) => {
         ))}
       </MapSVG>
     </MapContainer>
-
-    //   <Legend>
-    //     <p>Map Legend:</p>
-    //     <LegendList>
-    //       <li>Red vertex: Current location</li>
-    //       <li>Green vertex: Destination (Thuwal)</li>
-    //       <li>Blue vertices: Reachable cities</li>
-    //       <li>Grey vertices: Currently unreachable cities</li>
-    //       <li>Edge colors indicate travel conditions:</li>
-    //       <LegendList>
-    //         <li>Blue: Normal speed (clear weather)</li>
-    //         <li>Orange: Half speed (hot weather)</li>
-    //         <li>Red: No travel possible (sandstorm)</li>
-    //       </LegendList>
-    //     </LegendList>
-    //   </Legend>
-    // </Container>
   );
 };
 

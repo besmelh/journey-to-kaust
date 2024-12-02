@@ -7,7 +7,10 @@ from Algorithm_Project_Dynamic_Weather_V3 import (
 )
 
 app = Flask(__name__)
-CORS(app)
+# CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
+
+
 
 game_sessions = {}
 
@@ -20,6 +23,77 @@ def home():
 # Generates initial weather
 # Creates new game session with starting values
 # Returns initial game state
+# @app.route('/api/init-game', methods=['POST'])
+# def init_game():
+#     print("Received init-game request")
+#     session_id = request.json.get('session_id')
+#     print(f"Session ID: {session_id}")
+#     dict_graph, graph, weights, vertices, edges = setup_graph()
+#     start_cities = [city for city in vertices if city != 'Thuwal']
+#     start_city = random.choice(start_cities)
+#     # start_city = 'Hail'
+#     # Generate current day's weather
+#     daily_weather = generate_daily_weather(edges, WEATHER_SET, PROBABILITY_WEATHER)
+    
+#     game_sessions[session_id] = {
+#         'start_city': start_city,
+#         'current_city': start_city,
+#         'day': 1,
+#         'hours_remaining': DAILY_HOURS,
+#         'days_left': 29,
+#         'visited_cities': [start_city],
+#         'daily_weather': daily_weather,
+#         'graph_state': dict_graph,
+#         'edges': edges
+#     }
+    
+#     print("Sending response...")
+#     return jsonify({
+#         'start_city': start_city,
+#         'current_city': start_city,
+#         'day': 1,
+#         'hours_remaining': DAILY_HOURS,
+#         'days_left': 29,
+#         'weather': daily_weather,
+#         'neighboring_cities': list(dict_graph[start_city].keys())
+#     })
+
+
+# @app.route('/api/init-game', methods=['POST'])
+# def init_game():
+#     try:
+#         session_id = request.json.get('session_id')
+#         print("Received init-game request")
+#         session_id = request.json.get('session_id')
+#         print(f"Session ID: {session_id}")
+#         dict_graph, graph, weights, vertices, edges = setup_graph()
+#         start_cities = [city for city in vertices if city != 'Thuwal']
+#         start_city = random.choice(start_cities)
+#         # start_city = 'Hail'
+#         # Generate current day's weather
+#         daily_weather = generate_daily_weather(edges, WEATHER_SET, PROBABILITY_WEATHER)
+
+#         response_data = {
+#             'start_city': start_city,
+#             'current_city': start_city,
+#             'day': 1,
+#             'hours_remaining': DAILY_HOURS,
+#             'days_left': 29,
+#             'visited_cities': [start_city],
+#             'daily_weather': daily_weather,
+#             'graph_state': dict_graph,
+#             'edges': edges
+#         }
+    
+#         game_sessions[session_id] = response_data
+    
+#         print("Sending response...")
+#         return jsonify(response_data)
+    
+#     except Exception as e:
+#         print(f"Error in init_game: {str(e)}")
+#         return jsonify({'error': str(e)}), 500
+
 @app.route('/api/init-game', methods=['POST'])
 def init_game():
     session_id = request.json.get('session_id')
@@ -27,8 +101,16 @@ def init_game():
     start_cities = [city for city in vertices if city != 'Thuwal']
     start_city = random.choice(start_cities)
     
-    # Generate current day's weather
-    daily_weather = generate_daily_weather(edges, WEATHER_SET, PROBABILITY_WEATHER)
+    # Generate weather for each road
+    daily_weather = {}
+    for city1, connections in dict_graph.items():
+        for city2 in connections:
+            weather = random.choices(WEATHER_SET, PROBABILITY_WEATHER)[0]
+            speed = 100
+            daily_weather[f"{city1}-{city2}"] = {
+                'weather': weather,
+                'speed': speed
+            }
     
     game_sessions[session_id] = {
         'start_city': start_city,
@@ -36,10 +118,8 @@ def init_game():
         'day': 1,
         'hours_remaining': DAILY_HOURS,
         'days_left': 29,
-        'visited_cities': [start_city],
         'daily_weather': daily_weather,
         'graph_state': dict_graph,
-        'edges': edges
     }
     
     return jsonify({
@@ -52,6 +132,27 @@ def init_game():
         'neighboring_cities': list(dict_graph[start_city].keys())
     })
 
+@app.route('/api/game-status', methods=['GET'])
+def get_game_status():
+    # return jsonify({
+    #     'day': 1,
+    #     'hoursRemaining': 5,
+    #     'daysLeft': 29,
+    #     'weather': 'Clear',
+    #     'speed': 100,
+    #     'currentCity': 'Hail'  # Set default starting city
+    # })
+    session_id = request.json.get('session_id')
+    session = game_sessions[session_id]
+    
+    return jsonify({
+        'day': session['day'],
+        'hours_remaining': DAILY_HOURS,
+        'days_left': session['days_left'],
+        'weather': 'Clear',
+        'neighboring_cities': list(session['graph_state'][session['current_city']].keys()),
+        'currentCity': session['start_city']
+    })
 
 # Validates if travel to destination is possible based on weather and hours
 # Updates player position and remaining hours if travel succeeds
@@ -117,39 +218,39 @@ def wait():
 
 # *******************************************
 
-@app.route('/api/game-status', methods=['GET'])
-def get_game_status():
-    return jsonify(game_state)
+# @app.route('/api/game-status', methods=['GET'])
+# def get_game_status():
+#     return jsonify(game_state)
 
-@app.route('/api/graph-data', methods=['GET'])
-def get_graph_data():
-    return jsonify({
-        'currentCity': game_state['currentCity'],
-        'visitedCities': game_state['visitedCities']
-    })
+# @app.route('/api/graph-data', methods=['GET'])
+# def get_graph_data():
+#     return jsonify({
+#         'currentCity': game_state['currentCity'],
+#         'visitedCities': game_state['visitedCities']
+#     })
 
 @app.route('/api/test', methods=['GET'])
 def test_route():
     return jsonify({"message": "Flask backend is working!"})
 
 @app.route('/api/sample-data', methods=['GET'])
-def sample_data():
-    data = {
-        "locations": [
-            {"id": 1, "name": "City A", "type": "city"},
-            {"id": 2, "name": "Oil Field B", "type": "oil_field"},
-            {"id": 3, "name": "KAUST", "type": "destination"}
-        ],
-        "initialBudget": 1000,
-        "weatherForecast": ["clear", "hot", "sandstorm"],
-        "inventory": {
-            "water": 5,
-            "food": 5,
-            "fuel": 10
-        },
-        "score": 123
-    }
-    return jsonify(data)
+# def sample_data():
+#     data = {
+#         "locations": [
+#             {"id": 1, "name": "City A", "type": "city"},
+#             {"id": 2, "name": "Oil Field B", "type": "oil_field"},
+#             {"id": 3, "name": "KAUST", "type": "destination"}
+#         ],
+#         "initialBudget": 1000,
+#         "weatherForecast": ["clear", "hot", "sandstorm"],
+#         "inventory": {
+#             "water": 5,
+#             "food": 5,
+#             "fuel": 10
+#         },
+#         "score": 123
+#     }
+#     return jsonify(data)
 
 @app.route('/api/receive-data', methods=['POST'])
 def receive_data():
