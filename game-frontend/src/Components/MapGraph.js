@@ -366,7 +366,7 @@ const MapGraph = ({ style, gameState, onCitySelect, selectedCity }) => {
                 strokeWidth={isHovered ? 4 : 1.5}
                 className='transition-all duration-200'
               />
-              {isHovered &&
+              {/* {isHovered &&
                 renderEdgePopup(
                   city1,
                   city2,
@@ -374,7 +374,7 @@ const MapGraph = ({ style, gameState, onCitySelect, selectedCity }) => {
                   getEdgeWeather(city1, city2),
                   (start.x + end.x) / 2,
                   (start.y + end.y) / 2 - 50
-                )}
+                )} */}
             </g>
           );
         })
@@ -382,11 +382,44 @@ const MapGraph = ({ style, gameState, onCitySelect, selectedCity }) => {
       .filter(Boolean);
   };
 
-  const renderEdgePopup = (city1, city2, weight, weather, x, y) => {
-    const speed = weather === 'Clear' ? 100 : weather === 'Hot' ? 50 : 0;
-    const travelTime =
-      speed === 0 ? 'N/A' : `${Math.floor(weight / speed)} hour`;
+  // const renderEdgePopup = (city1, city2, weight, weather, x, y) => {
+  //   const speed = weather === 'Clear' ? 100 : weather === 'Hot' ? 50 : 0;
+  //   const travelTime =
+  //     speed === 0 ? 'N/A' : `${Math.floor(weight / speed)} hour`;
 
+  //   return (
+  //     <g transform={`translate(${x} ${y})`}>
+  //       <rect
+  //         x='-120'
+  //         y='-50'
+  //         width='240'
+  //         height='100'
+  //         fill='#B2D9B7'
+  //         fillOpacity='0.9'
+  //         rx='4'
+  //         filter='drop-shadow(0 2px 2px rgba(0, 0, 0, 0.25))'
+  //         zIndex='100'
+  //       />
+  //       <text
+  //         y='-20'
+  //         textAnchor='middle'
+  //         fill='#065f46'
+  //         fontSize='18px'
+  //         fontWeight='bold'
+  //       >
+  //         {`${city1} - ${city2}`}
+  //       </text>
+  //       <text y='5' textAnchor='middle' fill='#065f46' fontSize='16px'>
+  //         {`Weather: ${weather}`}
+  //       </text>
+  //       <text y='25' textAnchor='middle' fill='#065f46' fontSize='16px'>
+  //         {`Travel time: ${travelTime}`}
+  //       </text>
+  //     </g>
+  //   );
+  // };
+
+  const EdgePopup = ({ city1, city2, weight, weather, x, y }) => {
     return (
       <g transform={`translate(${x} ${y})`}>
         <rect
@@ -398,6 +431,7 @@ const MapGraph = ({ style, gameState, onCitySelect, selectedCity }) => {
           fillOpacity='0.9'
           rx='4'
           filter='drop-shadow(0 2px 2px rgba(0, 0, 0, 0.25))'
+          zIndex='100'
         />
         <text
           y='-20'
@@ -411,12 +445,13 @@ const MapGraph = ({ style, gameState, onCitySelect, selectedCity }) => {
         <text y='5' textAnchor='middle' fill='#065f46' fontSize='16px'>
           {`Weather: ${weather}`}
         </text>
-        <text y='25' textAnchor='middle' fill='#065f46' fontSize='16px'>
+        {/* <text y='25' textAnchor='middle' fill='#065f46' fontSize='16px'>
           {`Travel time: ${travelTime}`}
-        </text>
+        </text> */}
       </g>
     );
   };
+
   return (
     <MapContainer style={style}>
       <BackgroundMap src='/saudi-arabia-map.svg' alt='Saudi Arabia Map' />
@@ -453,6 +488,28 @@ const MapGraph = ({ style, gameState, onCitySelect, selectedCity }) => {
             </text>
           </g>
         ))}
+        {hoveredEdge && (
+          <EdgePopup
+            city1={hoveredEdge.split('-')[0]}
+            city2={hoveredEdge.split('-')[1]}
+            weight={edges[hoveredEdge.split('-')[0]][hoveredEdge.split('-')[1]]}
+            weather={getEdgeWeather(
+              hoveredEdge.split('-')[0],
+              hoveredEdge.split('-')[1]
+            )}
+            x={
+              (cityCoordinates[hoveredEdge.split('-')[0]].x +
+                cityCoordinates[hoveredEdge.split('-')[1]].x) /
+              2
+            }
+            y={
+              (cityCoordinates[hoveredEdge.split('-')[0]].y +
+                cityCoordinates[hoveredEdge.split('-')[1]].y) /
+                2 -
+              50
+            }
+          />
+        )}
       </MapSVG>
     </MapContainer>
   );
