@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 
+const API_URL = process.env.REACT_APP_API_URL;
+
 function GameComponent() {
   const [gameState, setGameState] = useState(null);
   const [error, setError] = useState(null);
 
   const fetchInitialState = () => {
-    fetch('http://127.0.0.1:5000/api/sample-data')
+    fetch(`${API_URL}/api/sample-data/`)
       .then((response) => {
         if (!response.ok) {
           throw new Error('Network response was not ok');
@@ -34,7 +36,7 @@ function GameComponent() {
   };
 
   const incrementScore = () => {
-    fetch('http://127.0.0.1:5000/api/increment-score', {
+    fetch(`${API_URL}/api/increment-score`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

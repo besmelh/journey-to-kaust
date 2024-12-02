@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 
+const API_URL = process.env.REACT_APP_API_URL;
+
 function TestMessageComponent() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch('http://127.0.0.1:5000')
+    fetch(`${API_URL}`)
       .then((response) => {
         if (!response.ok) {
           throw new Error('Network response was not ok');
