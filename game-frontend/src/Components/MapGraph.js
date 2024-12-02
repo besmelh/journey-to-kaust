@@ -377,8 +377,9 @@ const MapGraph = ({ style, gameState, onCitySelect, selectedCity }) => {
 
   const EdgePopup = ({ city1, city2, weight, weather, x, y }) => {
     const speed = weather === 'Clear' ? 100 : weather === 'Hot' ? 50 : 0;
-    const travelTime =
-      speed === 0 ? 'N/A' : `${Math.floor(weight / speed)} hour`;
+    // const travelTime =
+    //   speed === 0 ? 'N/A' : `${Math.floor(weight / speed)} hour`;
+    const travelTime = formatTravelTime(weight, weather);
     return (
       <g transform={`translate(${x} ${y})`} pointerEvents='none'>
         <rect
