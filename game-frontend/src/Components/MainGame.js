@@ -103,6 +103,10 @@ const MainGame = () => {
       setGameState((prevState) => ({
         ...prevState,
         ...updatedState,
+        day: updatedState.day,
+        daysLeft: updatedState.days_left,
+        hoursRemaining: updatedState.hours_remaining,
+        daily_weather: updatedState.daily_weather,
       }));
     } catch (error) {
       console.error('Failed to wait:', error);
