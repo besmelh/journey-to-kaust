@@ -104,9 +104,7 @@ def travel():
 
         # Get edge weather
         edge_key = f"{current_city}-{destination}"
-        reverse_key = f"{destination}-{current_city}"
-        weather = session['daily_weather'].get(edge_key, {}).get('weather') or \
-                session['daily_weather'].get(reverse_key, {}).get('weather')
+        weather = session['daily_weather'].get(edge_key, {}).get('weather', 'Clear')
         
         # Calculate travel possibility
         distance = session['graph_state'][current_city][destination]
@@ -118,23 +116,20 @@ def travel():
                 'travel_possible': False,
                 'message': 'Travel not possible'
             }), 200
-                
         
-        distance = session['graph_state'][current_city][destination]
-        weather = session['daily_weather'][(current_city, destination)]
-        
-
         # Update session state
         session['current_city'] = destination
         session['hours_remaining'] -= hours_needed
-        session['visited_cities'].append(destination)
+        if destination not in session['visited_cities']:
+            session['visited_cities'].append(destination)
         session['neighboring_cities'] = list(session['graph_state'][destination].keys())
         
         return jsonify({
             'travel_possible': True,
-            'current_city': session['current_city'],
+            'current_city': destination,
             'hours_remaining': session['hours_remaining'],
             'daily_weather': session['daily_weather'],
+            'graph_state': session['graph_state'],
             'neighboring_cities': session['neighboring_cities'],
             'visited_cities': session['visited_cities']
         })
@@ -142,27 +137,6 @@ def travel():
     except Exception as e:
         print(f"Error in travel endpoint: {str(e)}")
         return jsonify({'error': str(e)}), 500
-    # # Use same speed calculations as algorithm
-    # if weather == 'Sandstorm':
-    #     travel_possible = False
-    # else:
-    #     speed = 100 if weather == 'Clear' else 50  # Match algorithm speeds
-    #     hours_needed = distance / speed
-    #     travel_possible = hours_needed <= session['hours_remaining']
-    
-    # if travel_possible:
-    #     session['current_city'] = destination
-    #     session['hours_remaining'] -= hours_needed
-    #     session['visited_cities'].append(destination)
-    
-    # return jsonify({
-    #     'current_city': session['current_city'],
-    #     'hours_remaining': session['hours_remaining'],
-    #     'weather': session['daily_weather'],
-    #     'neighboring_cities': list(session['graph_state'][session['current_city']].keys()),
-    #     'travel_possible': travel_possible
-    # })
-
 
 # Advances to next day
 # Generates new weather
