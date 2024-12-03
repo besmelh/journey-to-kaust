@@ -7,13 +7,10 @@ import { gameApi } from '../services/gameApi';
 
 const Container = styled.div`
   width: 90%;
-  //height: 100vh;
   display: flex;
   flex-direction: row;
   justify-content: space-evenly;
   align-items: center;
-  //border: 1px solid #e5e7eb;
-  //background: white;
 `;
 
 const Cards = styled.div`
@@ -21,20 +18,21 @@ const Cards = styled.div`
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  //justify-content: space-around;
 `;
 
+const MAX_HOURS = 5;
+
 const MainGame = () => {
-  const [selectedCity, setSelectedCity] = useState(null);
+  const [selected_city, setSelectedCity] = useState(null);
   const [gameState, setGameState] = useState({
     day: 1,
-    hoursRemaining: 5,
-    daysLeft: 29,
-    weather: 'Clear',
-    speed: 100,
-    currentCity: '',
-    visitedCities: [],
-    neighboringCities: [],
+    hours_remaining: 5,
+    days_left: 29,
+    current_city: '',
+    visited_cities: [],
+    neighboring_cities: [],
+    graph_state: {},
+    daily_weather: {},
   });
 
   useEffect(() => {
@@ -46,18 +44,36 @@ const MainGame = () => {
       const sessionId =
         localStorage.getItem('gameSessionId') || generateSessionId();
       localStorage.setItem('gameSessionId', sessionId);
-      console.log('Calling initGame with sessionId:', sessionId);
 
       const initialState = await gameApi.initGame({ session_id: sessionId });
-      console.log('Received initialState:', initialState);
+
+      console.log('initializeGame initialState data:', initialState);
+
+      // Extract neighboring cities from the graph state
+      // const neighboring_cities = initialState.graph_state[
+      //   initialState.current_city
+      // ]
+      //   ? Object.keys(initialState.graph_state[initialState.current_city])
+      //   : [];
 
       setGameState((prev) => {
         const newState = {
           ...prev,
           ...initialState,
-          currentCity: initialState.start_city,
+          day: initialState.day,
+          hours_remaining: initialState.hours_remaining,
+          days_left: initialState.days_left,
+          current_city: initialState.start_city,
+          // visited_cities: [initialState.start_city],
+          // neighboring_cities: neighboring_cities,
+          visited_cities: initialState.visited_cities,
+          neighboring_cities: initialState.neighboring_cities,
+          graph_state: initialState.graph_state,
+          daily_weather: initialState.daily_weather,
         };
-        console.log('Setting game state to:', newState);
+
+        console.log('initializeGame newState data:', newState);
+
         return newState;
       });
     } catch (error) {
@@ -70,24 +86,66 @@ const MainGame = () => {
   };
 
   const handleCitySelect = (city) => {
-    if (gameState.neighboringCities.includes(city)) {
+    // Check if the city is a neighboring city using the graphState
+    const isNeighbor =
+      gameState.graph_state[gameState.current_city] &&
+      gameState.graph_state[gameState.current_city][city] !== undefined;
+
+    if (isNeighbor) {
       setSelectedCity(city);
+
+      // Calculate required hours based on distance and weather
+      // const distance = gameState.graphState[gameState.current_city][city];
+      // const edgeKey = `${gameState.current_city}-${city}`;
+      // const reverseEdgeKey = `${city}-${gameState.current_city}`;
+      // const weather =
+      //   gameState.dailyWeather[edgeKey]?.weather ||
+      //   gameState.dailyWeather[reverseEdgeKey]?.weather ||
+      //   'Clear';
+
+      // const speedMultiplier =
+      //   weather === 'Clear' ? 1 : weather === 'Hot' ? 0.5 : 0;
+
+      // const requiredHours =
+      //   speedMultiplier === 0 ? Infinity : distance / (100 * speedMultiplier);
+
+      // setGameState((prev) => ({
+      //   ...prev,
+      //   requiredHours,
+      // }));
     }
   };
 
   const handleTravel = async () => {
-    if (!selectedCity) return;
+    if (!selected_city) return;
 
     try {
       const sessionId = localStorage.getItem('gameSessionId');
-      const updatedState = await gameApi.travelToCity(sessionId, selectedCity);
+      const updatedState = await gameApi.travelToCity(sessionId, selected_city);
 
       if (updatedState.travel_possible) {
+        // Extract new neighboring cities from the updated graph state
+        // const new_neighboring_cities = updatedState.graph_state[selected_city]
+        //   ? Object.keys(updatedState.graph_state[selected_city])
+        //   : [];
+
         setGameState((prevState) => ({
           ...prevState,
           ...updatedState,
-          visitedCities: [...prevState.visitedCities, selectedCity],
+          day: updatedState.day,
+          hours_remaining: updatedState.hours_remaining,
+          days_left: updatedState.days_left,
+          current_city: updatedState.current_city,
+          visited_cities: updatedState.visited_cities,
+          neighboring_cities: updatedState.neighboring_cities,
+          graph_state: updatedState.graph_state,
+          daily_weather: updatedState.daily_weather,
+
+          // current_city: selected_city,
+          // neighboring_cities: new_neighboring_cities,
         }));
+
+        console.log('travel action data: ', gameState);
       }
 
       setSelectedCity(null);
@@ -100,14 +158,20 @@ const MainGame = () => {
     try {
       const sessionId = localStorage.getItem('gameSessionId');
       const updatedState = await gameApi.waitInCity(sessionId);
+
       setGameState((prevState) => ({
         ...prevState,
         ...updatedState,
+        current_city: updatedState.current_city,
         day: updatedState.day,
-        daysLeft: updatedState.days_left,
-        hoursRemaining: updatedState.hours_remaining,
+        days_left: updatedState.days_left,
+        hours_remaining: updatedState.hours_remaining,
         daily_weather: updatedState.daily_weather,
+        neighboring_cities: updatedState.neighboring_cities,
+        graph_state: updatedState.graph_state,
       }));
+
+      console.log('wait action data: ', gameState);
     } catch (error) {
       console.error('Failed to wait:', error);
     }
@@ -118,13 +182,13 @@ const MainGame = () => {
       <MapGraph
         gameState={gameState}
         onCitySelect={handleCitySelect}
-        selectedCity={selectedCity}
+        selected_city={selected_city}
       />
       <Cards>
         <GameStatusCard
           style={{ marginBottom: '80px' }}
           gameState={gameState}
-          selectedCity={selectedCity}
+          selected_city={selected_city}
           onTravel={handleTravel}
           onWait={handleWait}
         />

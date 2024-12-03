@@ -8,7 +8,23 @@ from Algorithm_Project_Dynamic_Weather_V3 import (
 
 app = Flask(__name__)
 # CORS(app)
-CORS(app, resources={r"/*": {"origins": "*"}})
+# CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app, resources={
+    r"/api/*": {
+        "origins": "http://localhost:3000",
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type"],
+        "supports_credentials": True
+    }
+})
+
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    return response
 
 
 
@@ -45,7 +61,10 @@ def init_game():
         'days_left': 29,
         'daily_weather': daily_weather,
         'graph_state': dict_graph,
+        'neighboring_cities': list(dict_graph[start_city].keys()),
+        'visited_cities': [start_city]
     }
+    
     
     game_sessions[session_id] = data
     print("data: ", data)
@@ -53,14 +72,6 @@ def init_game():
 
 @app.route('/api/game-status', methods=['GET'])
 def get_game_status():
-    # return jsonify({
-    #     'day': 1,
-    #     'hoursRemaining': 5,
-    #     'daysLeft': 29,
-    #     'weather': 'Clear',
-    #     'speed': 100,
-    #     'currentCity': 'Hail'  # Set default starting city
-    # })
     session_id = request.json.get('session_id')
     session = game_sessions[session_id]
     
@@ -70,7 +81,7 @@ def get_game_status():
         'days_left': session['days_left'],
         'weather': 'Clear',
         'neighboring_cities': list(session['graph_state'][session['current_city']].keys()),
-        'currentCity': session['start_city']
+        'current_city': session['start_city']
     })
 
 # Validates if travel to destination is possible based on weather and hours
@@ -78,35 +89,54 @@ def get_game_status():
 # Returns updated game state including whether travel was possible
 @app.route('/api/travel', methods=['POST'])
 def travel():
-    session_id = request.json.get('session_id')
-    destination = request.json.get('destination')
-    session = game_sessions[session_id]
-    
-    current_city = session['current_city']
-    distance = session['graph_state'][current_city][destination]
-    weather = session['daily_weather'][(current_city, destination)]
-    
-    # Use same speed calculations as algorithm
-    if weather == 'Sandstorm':
-        travel_possible = False
-    else:
-        speed = 100 if weather == 'Clear' else 50  # Match algorithm speeds
+    try: 
+        session_id = request.json.get('session_id')
+        destination = request.json.get('destination')
+        
+        if not session_id or not destination:
+            return jsonify({'message': 'Missing required parameters'}), 400
+            
+        if session_id not in game_sessions:
+            return jsonify({'message': 'Invalid session ID'}), 400
+        
+        session = game_sessions[session_id]
+        current_city = session['current_city']
+
+        # Get edge weather
+        edge_key = f"{current_city}-{destination}"
+        weather = session['daily_weather'].get(edge_key, {}).get('weather', 'Clear')
+        
+        # Calculate travel possibility
+        distance = session['graph_state'][current_city][destination]
+        speed = 50 if weather == 'Hot' else 100
         hours_needed = distance / speed
-        travel_possible = hours_needed <= session['hours_remaining']
-    
-    if travel_possible:
+        
+        if weather == 'Sandstorm' or hours_needed > session['hours_remaining']:
+            return jsonify({
+                'travel_possible': False,
+                'message': 'Travel not possible'
+            }), 200
+        
+        # Update session state
         session['current_city'] = destination
         session['hours_remaining'] -= hours_needed
-        session['visited_cities'].append(destination)
+        if destination not in session['visited_cities']:
+            session['visited_cities'].append(destination)
+        session['neighboring_cities'] = list(session['graph_state'][destination].keys())
+        
+        return jsonify({
+            'travel_possible': True,
+            'current_city': destination,
+            'hours_remaining': session['hours_remaining'],
+            'daily_weather': session['daily_weather'],
+            'graph_state': session['graph_state'],
+            'neighboring_cities': session['neighboring_cities'],
+            'visited_cities': session['visited_cities']
+        })
     
-    return jsonify({
-        'current_city': session['current_city'],
-        'hours_remaining': session['hours_remaining'],
-        'weather': session['daily_weather'],
-        'neighboring_cities': list(session['graph_state'][session['current_city']].keys()),
-        'travel_possible': travel_possible
-    })
-
+    except Exception as e:
+        print(f"Error in travel endpoint: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 # Advances to next day
 # Generates new weather
@@ -118,11 +148,11 @@ def wait():
         print("Running wait endpoint...")
         session_id = request.json.get('session_id')
         
-        if not session_id:
-            return jsonify({'error': 'No session_id provided'}), 400
+        # if not session_id:
+        #     return jsonify({'error': 'No session_id provided'}), 400
             
-        if session_id not in game_sessions:
-            return jsonify({'error': 'Invalid session_id'}), 400
+        # if session_id not in game_sessions:
+        #     return jsonify({'error': 'Invalid session_id'}), 400
             
         session = game_sessions[session_id]
     
@@ -134,19 +164,27 @@ def wait():
                 weather = random.choices(WEATHER_SET, PROBABILITY_WEATHER)[0]
                 daily_weather[edge_key] = {'weather': weather}
         
+        current_city = session['current_city']
+        neighboring_cities = list(session['graph_state'][current_city].keys())
+
         session['day'] += 1
         session['days_left'] -= 1
         session['hours_remaining'] = DAILY_HOURS
         session['daily_weather'] = daily_weather
         
-        return jsonify({
+        data = {
             'current_city': session['current_city'],
             'day': session['day'],
             'hours_remaining': DAILY_HOURS,
             'days_left': session['days_left'],
             'daily_weather': daily_weather,
-            'graph_state': session['graph_state']
-        })
+            'graph_state': session['graph_state'],
+            'neighboring_cities': neighboring_cities
+        }
+
+        print(" wait action api data...", data)
+
+        return jsonify(data)
     
     except Exception as e:
         print(f"Error in wait endpoint: {str(e)}")

@@ -12,9 +12,9 @@ function App() {
         <h1>Journey to Kaust</h1>
         <MainGame />
         {/* <MapGraph /> */}
-        <TestGameComponent />
-        <TestMessageComponent />
-        <SampleDataComponent />
+        {/* <TestGameComponent /> */}
+        {/* <TestMessageComponent /> */}
+        {/* <SampleDataComponent /> */}
       </header>
     </div>
   );

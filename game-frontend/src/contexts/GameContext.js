@@ -9,14 +9,14 @@ export const GameProvider = ({ children }) => {
   const [sessionId] = useState(uuidv4());
   const [gameState, setGameState] = useState({
     startCity: '',
-    currentCity: '',
+    current_city: '',
     day: 1,
-    hoursRemaining: 5,
-    daysLeft: 29,
+    hours_remaining: 5,
+    days_left: 29,
     weather: {},
-    selectedCity: null,
-    visitedCities: [],
-    neighboringCities: [],
+    selected_city: null,
+    visited_cities: [],
+    neighboring_cities: [],
     isGameOver: false,
     score: null,
     optimalPath: null,
@@ -28,7 +28,7 @@ export const GameProvider = ({ children }) => {
       setGameState((prev) => ({
         ...prev,
         ...data,
-        visitedCities: [data.start_city],
+        visited_cities: [data.start_city],
         isGameOver: false,
         score: null,
       }));
@@ -43,8 +43,8 @@ export const GameProvider = ({ children }) => {
       setGameState((prev) => ({
         ...prev,
         ...data,
-        visitedCities: [...prev.visitedCities, destination],
-        selectedCity: null,
+        visited_cities: [...prev.visitvisited_citiesedCities, destination],
+        selected_city: null,
       }));
 
       if (destination === 'Thuwal') {
@@ -84,7 +84,7 @@ export const GameProvider = ({ children }) => {
   const selectCity = (city) => {
     setGameState((prev) => ({
       ...prev,
-      selectedCity: city,
+      selected_city: city,
     }));
   };
 

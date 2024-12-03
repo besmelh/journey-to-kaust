@@ -72,9 +72,15 @@ const GreenButton = styled(Button)`
 
 //const GameStatusCard = ({ style }) => {
 
+const SPEED_MULTIPLIERS = {
+  Hot: 0.5,
+  Clear: 1,
+  Sandstorm: 0,
+};
+
 const GameStatusCard = ({
   gameState,
-  selectedCity,
+  selected_city,
   onTravel,
   onWait,
   style,
@@ -82,7 +88,7 @@ const GameStatusCard = ({
   const [loading, setLoading] = useState(false);
 
   const getTravelButtonProps = () => {
-    if (!selectedCity) {
+    if (!selected_city) {
       return {
         text: 'No city selected',
         disabled: true,
@@ -90,16 +96,48 @@ const GameStatusCard = ({
       };
     }
 
-    if (gameState.requiredHours > gameState.hoursRemaining) {
+    console.log('selected city: ', selected_city);
+
+    // Get edge weather
+    const edgeKey = `${gameState.current_city}-${selected_city}`;
+    const reverseEdgeKey = `${selected_city}-${gameState.current_city}`;
+    const weather =
+      gameState.daily_weather[edgeKey]?.weather ||
+      gameState.daily_weather[reverseEdgeKey]?.weather;
+
+    console.log('weather to selected city: ', weather);
+
+    // Check if weather permits travel
+    if (weather === 'Sandstorm') {
       return {
-        text: `${selectedCity} cannot be reached today`,
+        text: `Cannot travel during sandstorm`,
         disabled: true,
         variant: 'gray',
       };
     }
 
+    // Calculate required hours
+
+    const distance =
+      gameState.graph_state[gameState.current_city][selected_city];
+    const speedMultiplier = SPEED_MULTIPLIERS[weather];
+    const timeInHours = distance / (100 * speedMultiplier);
+
+    console.log('timeInHours: ', timeInHours);
+    console.log('hours_remaining: ', gameState.hours_remaining);
+
+    if (timeInHours > gameState.hours_remaining) {
+      console.log('timeInHours > gameState.hours_remaining');
+      return {
+        text: `${selected_city} cannot be reached today.`,
+        disabled: true,
+        variant: 'gray',
+      };
+    }
+
+    console.log('passed all checks. can travel to selection');
     return {
-      text: `Travel to ${selectedCity}`,
+      text: `Travel to ${selected_city}`,
       disabled: false,
       variant: 'green',
     };
@@ -113,17 +151,27 @@ const GameStatusCard = ({
 
       <StatusRow>
         <Label>Travel hours remaining:</Label>
-        <Value>{gameState.hoursRemaining}</Value>
+        <Value>{gameState.hours_remaining}</Value>
       </StatusRow>
 
       <StatusRow>
         <Label>Days left:</Label>
-        <Value>{gameState.daysLeft}</Value>
+        <Value>{gameState.days_left}</Value>
       </StatusRow>
 
       <StatusRow>
         <Label>Current city:</Label>
-        <Value>{gameState.currentCity}</Value>
+        <Value>{gameState.current_city}</Value>
+      </StatusRow>
+
+      <StatusRow>
+        <Label>Selected city:</Label>
+        <Value>{selected_city}</Value>
+      </StatusRow>
+
+      <StatusRow>
+        <Label>Neigboring cities:</Label>
+        <Value>{gameState.neighboring_cities}</Value>
       </StatusRow>
 
       <ButtonContainer>
@@ -137,7 +185,7 @@ const GameStatusCard = ({
           </GreenButton>
         )}
         <GreenButton onClick={onWait}>
-          Wait in {gameState.currentCity}
+          Wait in {gameState.current_city}
         </GreenButton>
       </ButtonContainer>
     </Card>
