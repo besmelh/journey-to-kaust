@@ -93,26 +93,6 @@ const MainGame = () => {
 
     if (isNeighbor) {
       setSelectedCity(city);
-
-      // Calculate required hours based on distance and weather
-      // const distance = gameState.graphState[gameState.current_city][city];
-      // const edgeKey = `${gameState.current_city}-${city}`;
-      // const reverseEdgeKey = `${city}-${gameState.current_city}`;
-      // const weather =
-      //   gameState.dailyWeather[edgeKey]?.weather ||
-      //   gameState.dailyWeather[reverseEdgeKey]?.weather ||
-      //   'Clear';
-
-      // const speedMultiplier =
-      //   weather === 'Clear' ? 1 : weather === 'Hot' ? 0.5 : 0;
-
-      // const requiredHours =
-      //   speedMultiplier === 0 ? Infinity : distance / (100 * speedMultiplier);
-
-      // setGameState((prev) => ({
-      //   ...prev,
-      //   requiredHours,
-      // }));
     }
   };
 
@@ -156,6 +136,8 @@ const MainGame = () => {
 
   const handleWait = async () => {
     try {
+      setSelectedCity(null);
+
       const sessionId = localStorage.getItem('gameSessionId');
       const updatedState = await gameApi.waitInCity(sessionId);
 
