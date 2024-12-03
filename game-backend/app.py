@@ -19,81 +19,6 @@ def home():
     return "Welcome to the Shortest Path Game API!"
 
 
-# Randomly selects a starting city
-# Generates initial weather
-# Creates new game session with starting values
-# Returns initial game state
-# @app.route('/api/init-game', methods=['POST'])
-# def init_game():
-#     print("Received init-game request")
-#     session_id = request.json.get('session_id')
-#     print(f"Session ID: {session_id}")
-#     dict_graph, graph, weights, vertices, edges = setup_graph()
-#     start_cities = [city for city in vertices if city != 'Thuwal']
-#     start_city = random.choice(start_cities)
-#     # start_city = 'Hail'
-#     # Generate current day's weather
-#     daily_weather = generate_daily_weather(edges, WEATHER_SET, PROBABILITY_WEATHER)
-    
-#     game_sessions[session_id] = {
-#         'start_city': start_city,
-#         'current_city': start_city,
-#         'day': 1,
-#         'hours_remaining': DAILY_HOURS,
-#         'days_left': 29,
-#         'visited_cities': [start_city],
-#         'daily_weather': daily_weather,
-#         'graph_state': dict_graph,
-#         'edges': edges
-#     }
-    
-#     print("Sending response...")
-#     return jsonify({
-#         'start_city': start_city,
-#         'current_city': start_city,
-#         'day': 1,
-#         'hours_remaining': DAILY_HOURS,
-#         'days_left': 29,
-#         'weather': daily_weather,
-#         'neighboring_cities': list(dict_graph[start_city].keys())
-#     })
-
-
-# @app.route('/api/init-game', methods=['POST'])
-# def init_game():
-#     try:
-#         session_id = request.json.get('session_id')
-#         print("Received init-game request")
-#         session_id = request.json.get('session_id')
-#         print(f"Session ID: {session_id}")
-#         dict_graph, graph, weights, vertices, edges = setup_graph()
-#         start_cities = [city for city in vertices if city != 'Thuwal']
-#         start_city = random.choice(start_cities)
-#         # start_city = 'Hail'
-#         # Generate current day's weather
-#         daily_weather = generate_daily_weather(edges, WEATHER_SET, PROBABILITY_WEATHER)
-
-#         response_data = {
-#             'start_city': start_city,
-#             'current_city': start_city,
-#             'day': 1,
-#             'hours_remaining': DAILY_HOURS,
-#             'days_left': 29,
-#             'visited_cities': [start_city],
-#             'daily_weather': daily_weather,
-#             'graph_state': dict_graph,
-#             'edges': edges
-#         }
-    
-#         game_sessions[session_id] = response_data
-    
-#         print("Sending response...")
-#         return jsonify(response_data)
-    
-#     except Exception as e:
-#         print(f"Error in init_game: {str(e)}")
-#         return jsonify({'error': str(e)}), 500
-
 @app.route('/api/init-game', methods=['POST'])
 def init_game():
     print("running init-game...")
@@ -109,11 +34,8 @@ def init_game():
     for city1, connections in dict_graph.items():
         for city2 in connections:
             weather = random.choices(WEATHER_SET, PROBABILITY_WEATHER)[0]
-            speed = 100
-            daily_weather[f"{city1}-{city2}"] = {
-                'weather': weather,
-                'speed': speed
-            }
+            daily_weather[f"{city1}-{city2}"] = {'weather': weather}
+
 
     data = {
         'start_city': start_city,
@@ -192,24 +114,43 @@ def travel():
 # Returns new day's state
 @app.route('/api/wait', methods=['POST'])
 def wait():
-    session_id = request.json.get('session_id')
-    session = game_sessions[session_id]
+    try:
+        print("Running wait endpoint...")
+        session_id = request.json.get('session_id')
+        
+        if not session_id:
+            return jsonify({'error': 'No session_id provided'}), 400
+            
+        if session_id not in game_sessions:
+            return jsonify({'error': 'Invalid session_id'}), 400
+            
+        session = game_sessions[session_id]
     
-    # Generate new weather just like algorithm
-    daily_weather = generate_daily_weather(session['edges'], WEATHER_SET, PROBABILITY_WEATHER)
+        # Generate new weather just like algorithm
+        daily_weather = {}
+        for city1, connections in session['graph_state'].items():
+            for city2 in connections.keys():
+                edge_key = f"{city1}-{city2}"
+                weather = random.choices(WEATHER_SET, PROBABILITY_WEATHER)[0]
+                daily_weather[edge_key] = {'weather': weather}
+        
+        session['day'] += 1
+        session['days_left'] -= 1
+        session['hours_remaining'] = DAILY_HOURS
+        session['daily_weather'] = daily_weather
+        
+        return jsonify({
+            'current_city': session['current_city'],
+            'day': session['day'],
+            'hours_remaining': DAILY_HOURS,
+            'days_left': session['days_left'],
+            'daily_weather': daily_weather,
+            'graph_state': session['graph_state']
+        })
     
-    session['day'] += 1
-    session['days_left'] -= 1
-    session['hours_remaining'] = DAILY_HOURS
-    session['daily_weather'] = daily_weather
-    
-    return jsonify({
-        'day': session['day'],
-        'hours_remaining': DAILY_HOURS,
-        'days_left': session['days_left'],
-        'weather': daily_weather,
-        'neighboring_cities': list(session['graph_state'][session['current_city']].keys())
-    })
+    except Exception as e:
+        print(f"Error in wait endpoint: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 
 

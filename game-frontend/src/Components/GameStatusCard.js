@@ -79,57 +79,7 @@ const GameStatusCard = ({
   onWait,
   style,
 }) => {
-  // const [gameStatus, setGameStatus] = useState({
-  //   day: 1,
-  //   hoursRemaining: 5,
-  //   daysLeft: 29,
-  //   weather: 'Clear',
-  //   speed: 100,
-  //   currentCity: '',
-  // });
   const [loading, setLoading] = useState(false);
-
-  // useEffect(() => {
-  //   fetchGameStatus();
-  // }, []);
-
-  // const fetchGameStatus = async () => {
-  //   try {
-  //     const status = await gameApi.getGameStatus();
-  //     setGameStatus(status);
-  //   } catch (error) {
-  //     console.error('Failed to fetch game status:', error);
-  //   }
-  // };
-
-  // const handleTravel = async () => {
-  //   if (!selectedCity || loading) return;
-
-  //   setLoading(true);
-  //   try {
-  //     const result = await gameApi.travelToCity(selectedCity);
-  //     setGameStatus(result);
-  //     onCitySelect(null); // Reset selection after travel
-  //   } catch (error) {
-  //     console.error('Failed to travel:', error);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
-  // const handleWait = async () => {
-  //   if (loading) return;
-
-  //   setLoading(true);
-  //   try {
-  //     const result = await gameApi.waitInCity();
-  //     setGameStatus(result);
-  //   } catch (error) {
-  //     console.error('Failed to wait:', error);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
 
   const getTravelButtonProps = () => {
     if (!selectedCity) {
@@ -139,26 +89,6 @@ const GameStatusCard = ({
         variant: 'gray',
       };
     }
-
-    // const edge = gameState.currentCity in edges ? edges[gameState.currentCity][selectedCity] : null;
-    // if (!edge) return { text: 'Invalid route', disabled: true, variant: 'gray' };
-
-    // const speed = speedMultipliers[gameState.weather.toLowerCase()] * BASE_SPEED;
-    // const requiredHours = edge / speed;
-
-    // if (requiredHours > gameState.hoursRemaining) {
-    //   return {
-    //     text: `Cannot reach ${selectedCity} today`,
-    //     disabled: true,
-    //     variant: 'gray'
-    //   };
-    // }
-
-    // return {
-    //   text: `Travel to ${selectedCity}`,
-    //   disabled: false,
-    //   variant: 'green'
-    // };
 
     if (gameState.requiredHours > gameState.hoursRemaining) {
       return {

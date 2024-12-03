@@ -391,7 +391,6 @@ const MapGraph = ({ style, gameState, onCitySelect, selectedCity }) => {
           fillOpacity='0.9'
           rx='4'
           filter='drop-shadow(0 2px 2px rgba(0, 0, 0, 0.25))'
-          zIndex='100'
         />
         <text
           y='-25'

@@ -24,10 +24,21 @@ export const gameApi = {
   },
 
   // Get current game status
-  async getGameStatus() {
-    const response = await fetch(`${API_URL}/api/game-status`);
-    if (!response.ok) throw new Error('Failed to fetch game status');
-    return response.json();
+  async getGameStatus(sessionId) {
+    try {
+      const response = await fetch(`${API_URL}/api/game-status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ session_id: sessionId }),
+      });
+      if (!response.ok) throw new Error('Failed to fetch game status');
+      return response.json();
+    } catch (error) {
+      console.error('Get game status error:', error);
+      throw error;
+    }
   },
 
   // Get graph data including nodes, edges, and visited cities
@@ -38,27 +49,41 @@ export const gameApi = {
   },
 
   // Travel to selected city
-  async travelToCity(selectedCity) {
-    const response = await fetch(`${API_URL}/api/travel`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ destination: selectedCity }),
-    });
-    if (!response.ok) throw new Error('Failed to travel to city');
-    return response.json();
+  async travelToCity(sessionId, destination) {
+    try {
+      const response = await fetch(`${API_URL}/api/travel`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          session_id: sessionId,
+          destination: destination,
+        }),
+      });
+      if (!response.ok) throw new Error('Failed to travel to city');
+      return response.json();
+    } catch (error) {
+      console.error('Travel error:', error);
+      throw error;
+    }
   },
 
   // Wait in current city
-  async waitInCity() {
-    const response = await fetch(`${API_URL}/api/wait`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    if (!response.ok) throw new Error('Failed to wait in city');
-    return response.json();
+  async waitInCity(sessionId) {
+    try {
+      const response = await fetch(`${API_URL}/api/wait`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ session_id: sessionId }),
+      });
+      if (!response.ok) throw new Error('Failed to wait in city');
+      return response.json();
+    } catch (error) {
+      console.error('Wait in city error:', error);
+      throw error;
+    }
   },
 };
