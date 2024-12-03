@@ -7,13 +7,10 @@ import { gameApi } from '../services/gameApi';
 
 const Container = styled.div`
   width: 90%;
-  //height: 100vh;
   display: flex;
   flex-direction: row;
   justify-content: space-evenly;
   align-items: center;
-  //border: 1px solid #e5e7eb;
-  //background: white;
 `;
 
 const Cards = styled.div`
@@ -21,7 +18,6 @@ const Cards = styled.div`
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  //justify-content: space-around;
 `;
 
 const MainGame = () => {
@@ -35,6 +31,8 @@ const MainGame = () => {
     currentCity: '',
     visitedCities: [],
     neighboringCities: [],
+    graph_state: {},
+    daily_weather: {},
   });
 
   useEffect(() => {
@@ -46,18 +44,24 @@ const MainGame = () => {
       const sessionId =
         localStorage.getItem('gameSessionId') || generateSessionId();
       localStorage.setItem('gameSessionId', sessionId);
-      console.log('Calling initGame with sessionId:', sessionId);
 
       const initialState = await gameApi.initGame({ session_id: sessionId });
-      console.log('Received initialState:', initialState);
+
+      // Extract neighboring cities from the graph state
+      const neighboringCities = initialState.graph_state[
+        initialState.current_city
+      ]
+        ? Object.keys(initialState.graph_state[initialState.current_city])
+        : [];
 
       setGameState((prev) => {
         const newState = {
           ...prev,
           ...initialState,
           currentCity: initialState.start_city,
+          neighboringCities,
+          visitedCities: [initialState.start_city],
         };
-        console.log('Setting game state to:', newState);
         return newState;
       });
     } catch (error) {
@@ -70,8 +74,33 @@ const MainGame = () => {
   };
 
   const handleCitySelect = (city) => {
-    if (gameState.neighboringCities.includes(city)) {
+    // Check if the city is a neighboring city using the graph_state
+    const isNeighbor =
+      gameState.graph_state[gameState.currentCity] &&
+      gameState.graph_state[gameState.currentCity][city] !== undefined;
+
+    if (isNeighbor) {
       setSelectedCity(city);
+
+      // Calculate required hours based on distance and weather
+      const distance = gameState.graph_state[gameState.currentCity][city];
+      const edgeKey = `${gameState.currentCity}-${city}`;
+      const reverseEdgeKey = `${city}-${gameState.currentCity}`;
+      const weather =
+        gameState.daily_weather[edgeKey]?.weather ||
+        gameState.daily_weather[reverseEdgeKey]?.weather ||
+        'Clear';
+
+      const speedMultiplier =
+        weather === 'Clear' ? 1 : weather === 'Hot' ? 0.5 : 0;
+
+      const requiredHours =
+        speedMultiplier === 0 ? Infinity : distance / (100 * speedMultiplier);
+
+      setGameState((prev) => ({
+        ...prev,
+        requiredHours,
+      }));
     }
   };
 
@@ -83,9 +112,16 @@ const MainGame = () => {
       const updatedState = await gameApi.travelToCity(sessionId, selectedCity);
 
       if (updatedState.travel_possible) {
+        // Extract new neighboring cities from the updated graph state
+        const newNeighboringCities = updatedState.graph_state[selectedCity]
+          ? Object.keys(updatedState.graph_state[selectedCity])
+          : [];
+
         setGameState((prevState) => ({
           ...prevState,
           ...updatedState,
+          currentCity: selectedCity,
+          neighboringCities: newNeighboringCities,
           visitedCities: [...prevState.visitedCities, selectedCity],
         }));
       }
@@ -100,6 +136,7 @@ const MainGame = () => {
     try {
       const sessionId = localStorage.getItem('gameSessionId');
       const updatedState = await gameApi.waitInCity(sessionId);
+
       setGameState((prevState) => ({
         ...prevState,
         ...updatedState,
@@ -107,6 +144,7 @@ const MainGame = () => {
         daysLeft: updatedState.days_left,
         hoursRemaining: updatedState.hours_remaining,
         daily_weather: updatedState.daily_weather,
+        neighboringCities: updatedState.neighboringCities,
       }));
     } catch (error) {
       console.error('Failed to wait:', error);
