@@ -11,7 +11,7 @@ export const GameProvider = ({ children }) => {
     startCity: '',
     currentCity: '',
     day: 1,
-    hoursRemaining: 5,
+    hours_remaining: 5,
     daysLeft: 29,
     weather: {},
     selectedCity: null,

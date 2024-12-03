@@ -6,6 +6,11 @@ const RED = '#FF2075';
 const GREEN = '#54ED39';
 const PURPLE = '#a855f7';
 const GREY = '#C5E2E0';
+const BLUE = '#3b82f6';
+
+const SANDSTORM = '#855001';
+const HOT = '#FFB64A';
+const CLEAR = '#FFF9D5';
 
 const MapContainer = styled.div`
   position: relative;
@@ -237,12 +242,18 @@ const getScaledCoordinates = () => {
 
 const cityCoordinates = getScaledCoordinates();
 
-const MapGraph = ({ style, gameState, onCitySelect, selectedCity }) => {
-  //const [weatherState, setWeatherState] = useState('clear');
+const MapGraph = ({ style, gameState = {}, onCitySelect, selectedCity }) => {
   const [hoveredCity, setHoveredCity] = useState(null);
   const [hoveredEdge, setHoveredEdge] = useState(null);
-  //const [currentCity, setCurrentCity] = useState('Hail');
   const goalCity = 'Thuwal';
+
+  const {
+    currentCity = '',
+    visitedCities = [],
+    neighboringCities = [],
+    dailyWeather = {},
+    graphState = {},
+  } = gameState;
 
   // Rest of your component logic remains the same
   const SPEED_MULTIPLIERS = {
@@ -278,11 +289,12 @@ const MapGraph = ({ style, gameState, onCitySelect, selectedCity }) => {
   };
 
   // Get vertex color based on its state
+  // Get vertex color based on its state
   const getVertexColor = (city) => {
-    if (city === gameState.currentCity) return RED; // Current city - Red
+    if (city === currentCity) return RED; // Current city - Red
     if (city === goalCity) return GREEN; // Goal city - Green
-    if (gameState.visitedCities.includes(city)) return PURPLE;
-    if (gameState.neighboringCities.includes(city)); // Connected cities - Blue
+    if (visitedCities?.includes(city)) return PURPLE;
+    if (neighboringCities?.includes(city)) return BLUE; // Connected cities - Blue
     return GREY; // Unreachable cities - Grey
   };
 
@@ -290,8 +302,8 @@ const MapGraph = ({ style, gameState, onCitySelect, selectedCity }) => {
     const edgeKey = `${city1}-${city2}`;
     const reverseEdgeKey = `${city2}-${city1}`;
     return (
-      gameState.daily_weather?.[edgeKey]?.weather ||
-      gameState.daily_weather?.[reverseEdgeKey]?.weather ||
+      gameState.dailyWeather?.[edgeKey]?.weather ||
+      gameState.dailyWeather?.[reverseEdgeKey]?.weather ||
       'Clear'
     );
   };
@@ -299,16 +311,21 @@ const MapGraph = ({ style, gameState, onCitySelect, selectedCity }) => {
   // Get edge color based on its state and weather
   const getEdgeColor = (city1, city2, weight) => {
     const weather = getEdgeWeather(city1, city2);
-    const speedMultiplier = SPEED_MULTIPLIERS[weather];
+    // const speedMultiplier = SPEED_MULTIPLIERS[weather];
     const isConnectedToCurrentCity =
       city1 === gameState.currentCity || city2 === gameState.currentCity;
-    const normalizedWeight = Math.min(weight / 800, 1);
+    // const normalizedWeight = Math.min(weight / 800, 1);
 
-    if (speedMultiplier === 0) return 'rgb(255, 0, 0)'; // Sandstorm - Red
+    // color all edges based on weather
+    // if (weather === 'Sandstorm') return SANDSTORM; // Sandstorm - Red
+    // if (weather === 'Hot') return HOT;
+    // if (weather === 'Clear') return CLEAR;
+
+    // color connected edges to current city
     if (isConnectedToCurrentCity) {
-      if (weather === 'Hot')
-        return `rgb(255, ${Math.floor(255 * (1 - normalizedWeight))}, 0)`; // Hot - Orange
-      return `rgb(0, ${Math.floor(255 * (1 - normalizedWeight))}, 255)`; // Clear - Blue
+      if (weather === 'Sandstorm') return SANDSTORM; // Sandstorm - Red
+      if (weather === 'Hot') return HOT;
+      if (weather === 'Clear') return CLEAR;
     }
     return GREY; // Unconnected - Grey
   };
@@ -325,7 +342,7 @@ const MapGraph = ({ style, gameState, onCitySelect, selectedCity }) => {
 
   const renderEdges = () => {
     const renderedEdges = new Set();
-    const edges = gameState.graph_state || {};
+    const edges = gameState.graphState || {};
 
     return Object.entries(edges)
       .flatMap(([city1, connections]) =>

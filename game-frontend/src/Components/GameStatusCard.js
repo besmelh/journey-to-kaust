@@ -90,7 +90,7 @@ const GameStatusCard = ({
       };
     }
 
-    if (gameState.requiredHours > gameState.hoursRemaining) {
+    if (gameState.requiredHours > gameState.hours_remaining) {
       return {
         text: `${selectedCity} cannot be reached today`,
         disabled: true,
@@ -113,7 +113,7 @@ const GameStatusCard = ({
 
       <StatusRow>
         <Label>Travel hours remaining:</Label>
-        <Value>{gameState.hoursRemaining}</Value>
+        <Value>{gameState.hours_remaining}</Value>
       </StatusRow>
 
       <StatusRow>
@@ -124,6 +124,11 @@ const GameStatusCard = ({
       <StatusRow>
         <Label>Current city:</Label>
         <Value>{gameState.currentCity}</Value>
+      </StatusRow>
+
+      <StatusRow>
+        <Label>Neigboring cities:</Label>
+        <Value>{gameState.neighboringCities}</Value>
       </StatusRow>
 
       <ButtonContainer>

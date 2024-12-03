@@ -31,8 +31,8 @@ const MainGame = () => {
     currentCity: '',
     visitedCities: [],
     neighboringCities: [],
-    graph_state: {},
-    daily_weather: {},
+    graphState: {},
+    dailyWeather: {},
   });
 
   useEffect(() => {
@@ -46,6 +46,8 @@ const MainGame = () => {
       localStorage.setItem('gameSessionId', sessionId);
 
       const initialState = await gameApi.initGame({ session_id: sessionId });
+
+      console.log('initializeGame initialState:', initialState);
 
       // Extract neighboring cities from the graph state
       const neighboringCities = initialState.graph_state[
@@ -62,6 +64,9 @@ const MainGame = () => {
           neighboringCities,
           visitedCities: [initialState.start_city],
         };
+
+        console.log('initializeGame newState:', newState);
+
         return newState;
       });
     } catch (error) {
@@ -74,21 +79,21 @@ const MainGame = () => {
   };
 
   const handleCitySelect = (city) => {
-    // Check if the city is a neighboring city using the graph_state
+    // Check if the city is a neighboring city using the graphState
     const isNeighbor =
-      gameState.graph_state[gameState.currentCity] &&
-      gameState.graph_state[gameState.currentCity][city] !== undefined;
+      gameState.graphState[gameState.currentCity] &&
+      gameState.graphState[gameState.currentCity][city] !== undefined;
 
     if (isNeighbor) {
       setSelectedCity(city);
 
       // Calculate required hours based on distance and weather
-      const distance = gameState.graph_state[gameState.currentCity][city];
+      const distance = gameState.graphState[gameState.currentCity][city];
       const edgeKey = `${gameState.currentCity}-${city}`;
       const reverseEdgeKey = `${city}-${gameState.currentCity}`;
       const weather =
-        gameState.daily_weather[edgeKey]?.weather ||
-        gameState.daily_weather[reverseEdgeKey]?.weather ||
+        gameState.dailyWeather[edgeKey]?.weather ||
+        gameState.dailyWeather[reverseEdgeKey]?.weather ||
         'Clear';
 
       const speedMultiplier =
@@ -143,7 +148,7 @@ const MainGame = () => {
         day: updatedState.day,
         daysLeft: updatedState.days_left,
         hoursRemaining: updatedState.hours_remaining,
-        daily_weather: updatedState.daily_weather,
+        dailyWeather: updatedState.daily_weather,
         neighboringCities: updatedState.neighboringCities,
       }));
     } catch (error) {
