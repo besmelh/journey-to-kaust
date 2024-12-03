@@ -72,6 +72,12 @@ const GreenButton = styled(Button)`
 
 //const GameStatusCard = ({ style }) => {
 
+const SPEED_MULTIPLIERS = {
+  Hot: 0.5,
+  Clear: 1,
+  Sandstorm: 0,
+};
+
 const GameStatusCard = ({
   gameState,
   selected_city,
@@ -90,12 +96,16 @@ const GameStatusCard = ({
       };
     }
 
+    console.log('selected city: ', selected_city);
+
     // Get edge weather
     const edgeKey = `${gameState.current_city}-${selected_city}`;
     const reverseEdgeKey = `${selected_city}-${gameState.current_city}`;
     const weather =
       gameState.daily_weather[edgeKey]?.weather ||
       gameState.daily_weather[reverseEdgeKey]?.weather;
+
+    console.log('weather to selected city: ', weather);
 
     // Check if weather permits travel
     if (weather === 'Sandstorm') {
@@ -107,12 +117,17 @@ const GameStatusCard = ({
     }
 
     // Calculate required hours
+
     const distance =
       gameState.graph_state[gameState.current_city][selected_city];
-    const speed = weather === 'Hot' ? 50 : 100;
-    const requiredHours = distance / speed;
+    const speedMultiplier = SPEED_MULTIPLIERS[weather];
+    const timeInHours = distance / (100 * speedMultiplier);
 
-    if (requiredHours > gameState.hoursRemaining) {
+    console.log('timeInHours: ', timeInHours);
+    console.log('hours_remaining: ', gameState.hours_remaining);
+
+    if (timeInHours > gameState.hours_remaining) {
+      console.log('timeInHours > gameState.hours_remaining');
       return {
         text: `${selected_city} cannot be reached today.`,
         disabled: true,
@@ -120,6 +135,7 @@ const GameStatusCard = ({
       };
     }
 
+    console.log('passed all checks. can travel to selection');
     return {
       text: `Travel to ${selected_city}`,
       disabled: false,
@@ -146,6 +162,11 @@ const GameStatusCard = ({
       <StatusRow>
         <Label>Current city:</Label>
         <Value>{gameState.current_city}</Value>
+      </StatusRow>
+
+      <StatusRow>
+        <Label>Selected city:</Label>
+        <Value>{selected_city}</Value>
       </StatusRow>
 
       <StatusRow>

@@ -303,8 +303,7 @@ const MapGraph = ({ style, gameState = {}, onCitySelect, selected_city }) => {
     const reverseEdgeKey = `${city2}-${city1}`;
     return (
       gameState.daily_weather?.[edgeKey]?.weather ||
-      gameState.daily_weather?.[reverseEdgeKey]?.weather ||
-      'Clear'
+      gameState.daily_weather?.[reverseEdgeKey]?.weather
     );
   };
 
