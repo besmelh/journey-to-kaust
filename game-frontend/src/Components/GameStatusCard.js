@@ -90,9 +90,31 @@ const GameStatusCard = ({
       };
     }
 
-    if (gameState.requiredHours > gameState.hours_remaining) {
+    // Get edge weather
+    const edgeKey = `${gameState.current_city}-${selected_city}`;
+    const reverseEdgeKey = `${selected_city}-${gameState.current_city}`;
+    const weather =
+      gameState.daily_weather[edgeKey]?.weather ||
+      gameState.daily_weather[reverseEdgeKey]?.weather;
+
+    // Check if weather permits travel
+    if (weather === 'Sandstorm') {
       return {
-        text: `${selected_city} cannot be reached today`,
+        text: `Cannot travel during sandstorm`,
+        disabled: true,
+        variant: 'gray',
+      };
+    }
+
+    // Calculate required hours
+    const distance =
+      gameState.graph_state[gameState.current_city][selected_city];
+    const speed = weather === 'Hot' ? 50 : 100;
+    const requiredHours = distance / speed;
+
+    if (requiredHours > gameState.hoursRemaining) {
+      return {
+        text: `${selected_city} cannot be reached today.`,
         disabled: true,
         variant: 'gray',
       };

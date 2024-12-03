@@ -6,6 +6,7 @@ export const gameApi = {
     try {
       const response = await fetch(`${API_URL}/api/init-game`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -28,6 +29,7 @@ export const gameApi = {
     try {
       const response = await fetch(`${API_URL}/api/game-status`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -53,6 +55,7 @@ export const gameApi = {
     try {
       const response = await fetch(`${API_URL}/api/travel`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -61,7 +64,10 @@ export const gameApi = {
           destination: destination,
         }),
       });
-      if (!response.ok) throw new Error('Failed to travel to city');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to travel to city');
+      }
       return response.json();
     } catch (error) {
       console.error('Travel error:', error);
@@ -74,6 +80,7 @@ export const gameApi = {
     try {
       const response = await fetch(`${API_URL}/api/wait`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },

@@ -20,14 +20,14 @@ const Cards = styled.div`
   align-items: flex-end;
 `;
 
+const MAX_HOURS = 5;
+
 const MainGame = () => {
   const [selected_city, setSelectedCity] = useState(null);
   const [gameState, setGameState] = useState({
     day: 1,
     hours_remaining: 5,
     days_left: 29,
-    // weather: 'Clear',
-    speed: 100,
     current_city: '',
     visited_cities: [],
     neighboring_cities: [],
@@ -50,19 +50,26 @@ const MainGame = () => {
       console.log('initializeGame initialState data:', initialState);
 
       // Extract neighboring cities from the graph state
-      const neighboring_cities = initialState.graph_state[
-        initialState.current_city
-      ]
-        ? Object.keys(initialState.graph_state[initialState.current_city])
-        : [];
+      // const neighboring_cities = initialState.graph_state[
+      //   initialState.current_city
+      // ]
+      //   ? Object.keys(initialState.graph_state[initialState.current_city])
+      //   : [];
 
       setGameState((prev) => {
         const newState = {
           ...prev,
           ...initialState,
+          day: initialState.day,
+          hours_remaining: initialState.hours_remaining,
+          days_left: initialState.days_left,
           current_city: initialState.start_city,
-          neighboring_cities,
-          visited_cities: [initialState.start_city],
+          // visited_cities: [initialState.start_city],
+          // neighboring_cities: neighboring_cities,
+          visited_cities: initialState.visited_cities,
+          neighboring_cities: initialState.neighboring_cities,
+          graph_state: initialState.graph_state,
+          daily_weather: initialState.daily_weather,
         };
 
         console.log('initializeGame newState data:', newState);
@@ -118,16 +125,24 @@ const MainGame = () => {
 
       if (updatedState.travel_possible) {
         // Extract new neighboring cities from the updated graph state
-        const new_neighboring_cities = updatedState.graph_state[selected_city]
-          ? Object.keys(updatedState.graph_state[selected_city])
-          : [];
+        // const new_neighboring_cities = updatedState.graph_state[selected_city]
+        //   ? Object.keys(updatedState.graph_state[selected_city])
+        //   : [];
 
         setGameState((prevState) => ({
           ...prevState,
           ...updatedState,
-          current_city: selected_city,
-          neighboring_cities: new_neighboring_cities,
-          visited_cities: [...prevState.visited_cities, selected_city],
+          day: updatedState.day,
+          hours_remaining: updatedState.hours_remaining,
+          days_left: updatedState.days_left,
+          current_city: updatedState.current_city,
+          visited_cities: updatedState.visited_cities,
+          neighboring_cities: updatedState.neighboring_cities,
+          graph_state: updatedState.graph_state,
+          daily_weather: updatedState.daily_weather,
+
+          // current_city: selected_city,
+          // neighboring_cities: new_neighboring_cities,
         }));
 
         console.log('travel action data: ', gameState);
@@ -147,11 +162,13 @@ const MainGame = () => {
       setGameState((prevState) => ({
         ...prevState,
         ...updatedState,
+        current_city: updatedState.current_city,
         day: updatedState.day,
         days_left: updatedState.days_left,
         hours_remaining: updatedState.hours_remaining,
         daily_weather: updatedState.daily_weather,
         neighboring_cities: updatedState.neighboring_cities,
+        graph_state: updatedState.graph_state,
       }));
 
       console.log('wait action data: ', gameState);
