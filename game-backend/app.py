@@ -11,7 +11,7 @@ app = Flask(__name__)
 # CORS(app, resources={r"/*": {"origins": "*"}})
 CORS(app, resources={
     r"/api/*": {
-        "origins": "http://localhost:3000",
+        "origins": ["http://localhost:3000", "https://journey-to-kaust.netlify.app"],
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type"],
         "supports_credentials": True
@@ -20,10 +20,15 @@ CORS(app, resources={
 
 @app.after_request
 def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    # Get origin from request headers
+    origin = request.headers.get('Origin')
+    allowed_origins = ['http://localhost:3000', 'https://journey-to-kaust.netlify.app']
+    
+    if origin in allowed_origins:
+        response.headers.add('Access-Control-Allow-Origin', origin)
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
     return response
 
 
