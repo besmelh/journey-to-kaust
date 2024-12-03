@@ -74,7 +74,7 @@ const GreenButton = styled(Button)`
 
 const GameStatusCard = ({
   gameState,
-  selectedCity,
+  selected_city,
   onTravel,
   onWait,
   style,
@@ -82,7 +82,7 @@ const GameStatusCard = ({
   const [loading, setLoading] = useState(false);
 
   const getTravelButtonProps = () => {
-    if (!selectedCity) {
+    if (!selected_city) {
       return {
         text: 'No city selected',
         disabled: true,
@@ -92,14 +92,14 @@ const GameStatusCard = ({
 
     if (gameState.requiredHours > gameState.hours_remaining) {
       return {
-        text: `${selectedCity} cannot be reached today`,
+        text: `${selected_city} cannot be reached today`,
         disabled: true,
         variant: 'gray',
       };
     }
 
     return {
-      text: `Travel to ${selectedCity}`,
+      text: `Travel to ${selected_city}`,
       disabled: false,
       variant: 'green',
     };
@@ -118,17 +118,17 @@ const GameStatusCard = ({
 
       <StatusRow>
         <Label>Days left:</Label>
-        <Value>{gameState.daysLeft}</Value>
+        <Value>{gameState.days_left}</Value>
       </StatusRow>
 
       <StatusRow>
         <Label>Current city:</Label>
-        <Value>{gameState.currentCity}</Value>
+        <Value>{gameState.current_city}</Value>
       </StatusRow>
 
       <StatusRow>
         <Label>Neigboring cities:</Label>
-        <Value>{gameState.neighboringCities}</Value>
+        <Value>{gameState.neighboring_cities}</Value>
       </StatusRow>
 
       <ButtonContainer>
@@ -142,7 +142,7 @@ const GameStatusCard = ({
           </GreenButton>
         )}
         <GreenButton onClick={onWait}>
-          Wait in {gameState.currentCity}
+          Wait in {gameState.current_city}
         </GreenButton>
       </ButtonContainer>
     </Card>

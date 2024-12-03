@@ -69,14 +69,6 @@ def init_game():
 
 @app.route('/api/game-status', methods=['GET'])
 def get_game_status():
-    # return jsonify({
-    #     'day': 1,
-    #     'hoursRemaining': 5,
-    #     'daysLeft': 29,
-    #     'weather': 'Clear',
-    #     'speed': 100,
-    #     'currentCity': 'Hail'  # Set default starting city
-    # })
     session_id = request.json.get('session_id')
     session = game_sessions[session_id]
     
@@ -86,7 +78,7 @@ def get_game_status():
         'days_left': session['days_left'],
         'weather': 'Clear',
         'neighboring_cities': list(session['graph_state'][session['current_city']].keys()),
-        'currentCity': session['start_city']
+        'current_city': session['start_city']
     })
 
 # Validates if travel to destination is possible based on weather and hours
@@ -155,14 +147,18 @@ def wait():
         session['hours_remaining'] = DAILY_HOURS
         session['daily_weather'] = daily_weather
         
-        return jsonify({
+        data = {
             'current_city': session['current_city'],
             'day': session['day'],
             'hours_remaining': DAILY_HOURS,
             'days_left': session['days_left'],
             'daily_weather': daily_weather,
             'graph_state': session['graph_state']
-        })
+        }
+
+        print(" wait action api data...", data)
+
+        return jsonify(data)
     
     except Exception as e:
         print(f"Error in wait endpoint: {str(e)}")

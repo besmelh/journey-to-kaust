@@ -242,17 +242,17 @@ const getScaledCoordinates = () => {
 
 const cityCoordinates = getScaledCoordinates();
 
-const MapGraph = ({ style, gameState = {}, onCitySelect, selectedCity }) => {
+const MapGraph = ({ style, gameState = {}, onCitySelect, selected_city }) => {
   const [hoveredCity, setHoveredCity] = useState(null);
   const [hoveredEdge, setHoveredEdge] = useState(null);
   const goalCity = 'Thuwal';
 
   const {
-    currentCity = '',
-    visitedCities = [],
-    neighboringCities = [],
-    dailyWeather = {},
-    graphState = {},
+    current_city = '',
+    visited_cities = [],
+    neighboring_cities = [],
+    daily_weather = {},
+    graph_state = {},
   } = gameState;
 
   // Rest of your component logic remains the same
@@ -275,13 +275,13 @@ const MapGraph = ({ style, gameState = {}, onCitySelect, selectedCity }) => {
   // Get connected cities to current city
   const getConnectedCities = () => {
     const connected = new Set();
-    if (edges[gameState.currentCity]) {
-      Object.keys(edges[gameState.currentCity]).forEach((city) =>
+    if (edges[gameState.current_city]) {
+      Object.keys(edges[gameState.current_city]).forEach((city) =>
         connected.add(city)
       );
     }
     Object.entries(edges).forEach(([city, connections]) => {
-      if (connections[gameState.currentCity]) {
+      if (connections[gameState.current_city]) {
         connected.add(city);
       }
     });
@@ -291,10 +291,10 @@ const MapGraph = ({ style, gameState = {}, onCitySelect, selectedCity }) => {
   // Get vertex color based on its state
   // Get vertex color based on its state
   const getVertexColor = (city) => {
-    if (city === currentCity) return RED; // Current city - Red
+    if (city === current_city) return RED; // Current city - Red
     if (city === goalCity) return GREEN; // Goal city - Green
-    if (visitedCities?.includes(city)) return PURPLE;
-    if (neighboringCities?.includes(city)) return BLUE; // Connected cities - Blue
+    if (visited_cities?.includes(city)) return PURPLE;
+    if (neighboring_cities?.includes(city)) return BLUE; // Connected cities - Blue
     return GREY; // Unreachable cities - Grey
   };
 
@@ -302,8 +302,8 @@ const MapGraph = ({ style, gameState = {}, onCitySelect, selectedCity }) => {
     const edgeKey = `${city1}-${city2}`;
     const reverseEdgeKey = `${city2}-${city1}`;
     return (
-      gameState.dailyWeather?.[edgeKey]?.weather ||
-      gameState.dailyWeather?.[reverseEdgeKey]?.weather ||
+      gameState.daily_weather?.[edgeKey]?.weather ||
+      gameState.daily_weather?.[reverseEdgeKey]?.weather ||
       'Clear'
     );
   };
@@ -313,7 +313,7 @@ const MapGraph = ({ style, gameState = {}, onCitySelect, selectedCity }) => {
     const weather = getEdgeWeather(city1, city2);
     // const speedMultiplier = SPEED_MULTIPLIERS[weather];
     const isConnectedToCurrentCity =
-      city1 === gameState.currentCity || city2 === gameState.currentCity;
+      city1 === gameState.current_city || city2 === gameState.current_city;
     // const normalizedWeight = Math.min(weight / 800, 1);
 
     // color all edges based on weather
@@ -331,7 +331,7 @@ const MapGraph = ({ style, gameState = {}, onCitySelect, selectedCity }) => {
   };
 
   const isClickable = (city) => {
-    return gameState.neighboringCities?.includes(city);
+    return gameState.neighboring_cities?.includes(city);
   };
 
   const handleCityClick = (city) => {
@@ -342,7 +342,7 @@ const MapGraph = ({ style, gameState = {}, onCitySelect, selectedCity }) => {
 
   const renderEdges = () => {
     const renderedEdges = new Set();
-    const edges = gameState.graphState || {};
+    const edges = gameState.graph_state || {};
 
     return Object.entries(edges)
       .flatMap(([city1, connections]) =>
@@ -450,7 +450,7 @@ const MapGraph = ({ style, gameState = {}, onCitySelect, selectedCity }) => {
               r={hoveredCity === city ? 12 : 6}
               fill={getVertexColor(city)}
               className='transition-all duration-200'
-              stroke={selectedCity === city ? '#000' : 'none'}
+              stroke={selected_city === city ? '#000' : 'none'}
               strokeWidth={2}
             />
             <text

@@ -80,6 +80,7 @@ export const gameApi = {
         body: JSON.stringify({ session_id: sessionId }),
       });
       if (!response.ok) throw new Error('Failed to wait in city');
+      console.log('waitInCity response: ', response);
       return response.json();
     } catch (error) {
       console.error('Wait in city error:', error);
