@@ -17,7 +17,7 @@ import heapq
 # Configuration Constants
 #--------------------------------------------------------------------------------
 
-DAILY_HOURS = 6
+DAILY_HOURS = 5
 CAR_SPEED = 100
 MAX_DAYS = 30
 WEATHER_SET = ['Hot', 'Clear', 'Sandstorm']

@@ -169,10 +169,10 @@ const GameStatusCard = ({
         <Value>{selected_city}</Value>
       </StatusRow>
 
-      <StatusRow>
+      {/* <StatusRow>
         <Label>Neigboring cities:</Label>
         <Value>{gameState.neighboring_cities}</Value>
-      </StatusRow>
+      </StatusRow> */}
 
       <ButtonContainer>
         {travelButtonProps.variant === 'gray' ? (
