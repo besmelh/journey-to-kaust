@@ -104,30 +104,70 @@ def travel():
         session = game_sessions[session_id]
         current_city = session['current_city']
 
-        # Get edge weather
+        # Get edge weather and calculate travel requirements
         edge_key = f"{current_city}-{destination}"
         weather = session['daily_weather'].get(edge_key, {}).get('weather', 'Clear')
         
-        # Calculate travel possibility
+        # Calculate travel possibility and partial travel
         distance = session['graph_state'][current_city][destination]
         speed = 50 if weather == 'Hot' else 100
         hours_needed = distance / speed
         
-        if weather == 'Sandstorm' or hours_needed > session['hours_remaining']:
+        if weather == 'Sandstorm':
             return jsonify({
                 'travel_possible': False,
-                'message': 'Travel not possible'
+                'message': 'Travel not possible due to sandstorm'
             }), 200
-        
-        # Update session state
+
+        # Handle partial travel if needed
+        if hours_needed > session['hours_remaining']:
+            # Calculate partial distance that can be covered
+            partial_distance = session['hours_remaining'] * speed
+            remaining_distance = distance - partial_distance
+            
+            # Update the graph state with remaining distance
+            session['graph_state'][current_city][destination] = remaining_distance
+            session['graph_state'][destination][current_city] = remaining_distance
+            
+            # Update session state for partial travel
+            session['partial_travel'] = {
+                'from': current_city,
+                'to': destination,
+                'remaining_distance': remaining_distance,
+                'progress': partial_distance / distance
+            }
+            session['hours_remaining'] = 0
+            
+            return jsonify({
+                'day': session['day'],
+                'days_left': session['days_left'],
+                'visited_cities': session['visited_cities'],
+                'travel_possible': True,
+                'partial_travel': True,
+                'current_city': current_city,
+                'destination': destination,
+                'hours_remaining': 0,
+                'progress': partial_distance / distance,
+                'remaining_distance': remaining_distance,
+                'daily_weather': session['daily_weather'],
+                'graph_state': session['graph_state'],
+                'neighboring_cities': session['neighboring_cities']
+            })
+    
+        # Complete travel if possible within remaining hours
         session['current_city'] = destination
         session['hours_remaining'] -= hours_needed
         if destination not in session['visited_cities']:
             session['visited_cities'].append(destination)
         session['neighboring_cities'] = list(session['graph_state'][destination].keys())
+        session['partial_travel'] = None
         
         return jsonify({
+            'day': session['day'],
+            'days_left': session['days_left'],
+            'visited_cities': session['visited_cities'],
             'travel_possible': True,
+            'partial_travel': False,
             'current_city': destination,
             'hours_remaining': session['hours_remaining'],
             'daily_weather': session['daily_weather'],
@@ -139,7 +179,7 @@ def travel():
     except Exception as e:
         print(f"Error in travel endpoint: {str(e)}")
         return jsonify({'error': str(e)}), 500
-
+    
 # Advances to next day
 # Generates new weather
 # Resets daily hours
@@ -151,7 +191,7 @@ def wait():
         session_id = request.json.get('session_id')
         session = game_sessions[session_id]
     
-        # Generate new weather using string keys
+        # Generate new weather
         daily_weather = {}
         for city1, connections in session['graph_state'].items():
             for city2 in connections.keys():
@@ -159,7 +199,17 @@ def wait():
                 daily_weather[f"{city1}-{city2}"] = {'weather': weather}
                 daily_weather[f"{city2}-{city1}"] = {'weather': weather}
         
-        current_city = session['current_city']
+        # Handle continuation of partial travel
+        if session.get('partial_travel'):
+            partial = session['partial_travel']
+            current_city = partial['from']
+            
+            # Reset the distance in graph_state to the remaining distance
+            session['graph_state'][partial['from']][partial['to']] = partial['remaining_distance']
+            session['graph_state'][partial['to']][partial['from']] = partial['remaining_distance']
+        else:
+            current_city = session['current_city']
+            
         neighboring_cities = list(session['graph_state'][current_city].keys())
 
         session['day'] += 1
@@ -169,13 +219,14 @@ def wait():
         session['weather_history'][session['day']] = daily_weather
         
         data = {
-            'current_city': session['current_city'],
+            'current_city': current_city,
             'day': session['day'],
             'hours_remaining': DAILY_HOURS,
             'days_left': session['days_left'],
             'daily_weather': daily_weather,
             'graph_state': session['graph_state'],
-            'neighboring_cities': neighboring_cities
+            'neighboring_cities': neighboring_cities,
+            'partial_travel': session.get('partial_travel')
         }
 
         return jsonify(data)
@@ -183,7 +234,8 @@ def wait():
     except Exception as e:
         print(f"Error in wait endpoint: {str(e)}")
         return jsonify({'error': str(e)}), 500
-    
+
+
 @app.route('/api/complete-game', methods=['POST'])
 def complete_game():
     try:
