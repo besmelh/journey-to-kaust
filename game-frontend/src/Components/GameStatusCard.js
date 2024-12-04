@@ -88,7 +88,13 @@ const GameStatusCard = ({
 }) => {
   const [loading, setLoading] = useState(false);
 
+  // Handle regular city selection travel
   const getTravelButtonProps = () => {
+    // If in partial travel, don't show this button at all
+    if (gameState.partial_travel) {
+      return null;
+    }
+
     if (!selected_city) {
       return {
         text: 'No city selected',
@@ -97,30 +103,7 @@ const GameStatusCard = ({
       };
     }
 
-    // Special handling for partial travel state
-    if (gameState.partial_travel) {
-      if (selected_city === gameState.partial_travel.from) {
-        return {
-          text: `Return to ${selected_city}`,
-          disabled: false,
-          variant: 'green',
-        };
-      }
-      if (selected_city === gameState.partial_travel.to) {
-        return {
-          text: `Continue to ${selected_city}`,
-          disabled: false,
-          variant: 'green',
-        };
-      }
-      return {
-        text: 'Must complete or return from current travel',
-        disabled: true,
-        variant: 'gray',
-      };
-    }
-
-    // Regular travel logic...
+    // Get edge weather
     const edgeKey = `${gameState.current_city}-${selected_city}`;
     const reverseEdgeKey = `${selected_city}-${gameState.current_city}`;
     const weather =
@@ -155,6 +138,29 @@ const GameStatusCard = ({
     };
   };
 
+  // Get the continue journey button props during partial travel
+  const getContinueJourneyProps = () => {
+    if (!gameState.partial_travel) return null;
+
+    const { from, to } = gameState.partial_travel;
+    const edgeKey = `${from}-${to}`;
+    const weather = gameState.daily_weather[edgeKey]?.weather;
+
+    return {
+      text:
+        weather === 'Sandstorm'
+          ? 'Cannot continue - Sandstorm'
+          : 'Continue Journey',
+      disabled: weather === 'Sandstorm',
+      variant: weather === 'Sandstorm' ? 'gray' : 'green',
+      onClick: () => {
+        console.log('Continue journey clicked'); // Debug log
+        onTravel();
+      },
+    };
+  };
+
+  // Get the text for the wait/camp button
   const getWaitButtonText = () => {
     if (gameState.partial_travel) {
       return 'Camp here for the night';
@@ -162,7 +168,31 @@ const GameStatusCard = ({
     return `Wait in ${gameState.current_city}`;
   };
 
+  // Get travel weather status during partial travel
+  const getPartialTravelWeatherStatus = () => {
+    if (!gameState.partial_travel) return null;
+
+    const { from, to } = gameState.partial_travel;
+    const edgeKey = `${from}-${to}`;
+    const weather = gameState.daily_weather[edgeKey]?.weather;
+
+    if (weather === 'Sandstorm') {
+      return {
+        text: 'Cannot continue - Sandstorm',
+        disabled: true,
+        variant: 'gray',
+      };
+    }
+
+    return {
+      text: 'Continue Journey',
+      disabled: false,
+      variant: 'green',
+    };
+  };
+
   const travelButtonProps = getTravelButtonProps();
+  const continueJourneyProps = getContinueJourneyProps();
 
   return (
     <Card style={style}>
@@ -194,33 +224,48 @@ const GameStatusCard = ({
         </StatusRow>
       )}
 
-      {selected_city && (
+      {!gameState.partial_travel && selected_city && (
         <StatusRow>
           <Label>Selected city:</Label>
           <Value>{selected_city}</Value>
         </StatusRow>
       )}
 
-      {gameState.message && (
-        <StatusRow>
-          <Label>Status:</Label>
-          <Value>{gameState.message}</Value>
-        </StatusRow>
-      )}
-
       <ButtonContainer>
-        {travelButtonProps.variant === 'gray' ? (
+        {gameState.partial_travel ? (
+          // Continue Journey button during partial travel
+          continueJourneyProps.variant === 'gray' ? (
+            <GrayButton disabled={true}>{continueJourneyProps.text}</GrayButton>
+          ) : (
+            <GreenButton
+              onClick={continueJourneyProps.onClick}
+              disabled={false}
+            >
+              {continueJourneyProps.text}
+            </GreenButton>
+          )
+        ) : // Regular travel button
+        travelButtonProps.variant === 'gray' ? (
           <GrayButton disabled={travelButtonProps.disabled}>
             {travelButtonProps.text}
           </GrayButton>
         ) : (
-          <GreenButton onClick={onTravel} disabled={travelButtonProps.disabled}>
+          <GreenButton
+            onClick={() => onTravel(selected_city)}
+            disabled={travelButtonProps.disabled}
+          >
             {travelButtonProps.text}
           </GreenButton>
         )}
-        <GreenButton onClick={onWait}>{getWaitButtonText()}</GreenButton>
+
+        <GreenButton onClick={onWait}>
+          {gameState.partial_travel
+            ? 'Camp here for the night'
+            : `Wait in ${gameState.current_city}`}
+        </GreenButton>
       </ButtonContainer>
     </Card>
   );
 };
+
 export default GameStatusCard;
