@@ -149,8 +149,6 @@ def dijkstra(graph, start, end, dict_graphs_daily=None, pre_processed_distances=
     return reconstructed_path, visited[end]
 
 
-
-
 def dynamic_programming(graph, start, end, dict_graphs_daily=None, pre_processed_distances=None, alpha = 0.2, beta = 0.3):  # bellman_ford
     # Initialize distances and path storage
     distances = {vertex: float('inf') for vertex in graph.vs['name']}
@@ -169,7 +167,6 @@ def dynamic_programming(graph, start, end, dict_graphs_daily=None, pre_processed
             # expected_weight = sum(weight / SPEED_SET[weather] * probability for weather, probability in zip(WEATHER_SET, PROBABILITY_WEATHER))
             # expected_weight = calculate_expected_weight(weight, source, target, dict_graphs_daily, pre_processed_distances, alpha, beta)
             expected_weight = weight
-
             # Relaxation step for source -> target
             if distances[source] + expected_weight < distances[target]:
                 distances[target] = distances[source] + expected_weight
@@ -181,6 +178,7 @@ def dynamic_programming(graph, start, end, dict_graphs_daily=None, pre_processed
                 paths[source] = paths[target] + [source]
 
     return paths[end], distances[end]  # Return the path and the total cost
+
 
 def precompute_distances_to_endpoint(graph, endpoint):
 
@@ -235,13 +233,10 @@ def add_end_of_day_summary(daily_info, day, from_node, to_node, remaining_distan
     
 def simulate_journey(dict_graphs, graph, edges, start_node = 'Hail', end_node = END_NODE, daily_hours = DAILY_HOURS,
                      car_speed = CAR_SPEED, max_days=MAX_DAYS, algorithm_type='Dijkstra', random_seed = 0,
-                     pre_processed_distances=None, alpha = 0.2, beta = 0.3, weather_history=None):
+                     pre_processed_distances=None, alpha = 0.2, beta = 0.3):
     
     """
     Simulates a journey from the start node to the end node using the specified algorithm, taking into account daily travel limits and dynamic edge weights based on conditions.   
-    """
-    """
-    Modified to accept weather_history parameter for consistent weather conditions
     """
         
     dict_graphs_daily = copy.deepcopy(dict_graphs) # for updating the remaining distance
@@ -255,24 +250,11 @@ def simulate_journey(dict_graphs, graph, edges, start_node = 'Hail', end_node = 
     print("student start at ", start_node)
     for i in range(max_days):
         print(f"Day {i + 1}")
-         
         # set the random seed for reproducibility
-        # random.seed(i + random_seed)
-        # daily_weather = generate_daily_weather(edges, WEATHER_SET, PROBABILITY_WEATHER) # for all edges       
+        random.seed(i + random_seed)
 
-        # Use provided weather if available, otherwise generate new
-        if weather_history and i + 1 in weather_history:
-            daily_weather = {}
-            weather_data = weather_history[i + 1]
-            for edge_key, weather_info in weather_data.items():
-                city1, city2 = edge_key.split('-')
-                daily_weather[(city1, city2)] = weather_info['weather']
-        else:
-            random.seed(i + random_seed)
-            daily_weather = generate_daily_weather(edges, WEATHER_SET, PROBABILITY_WEATHER)
-
+        daily_weather = generate_daily_weather(edges, WEATHER_SET, PROBABILITY_WEATHER) # for all edges
         print(f"Daily weather: {daily_weather}")
-        
         # Initialize daily record
         daily_info[i] = {
             'weather': daily_weather, 
@@ -621,8 +603,6 @@ def main():
     Alpha is the weight for the weather conditions, beta is the weight for the precomputed distances
     '''
 
-    # alpha_list = [0.0, 0.1, 0.2, 0.3, 0.4]
-    # beta_list = [0.0, 0.1, 0.2, 0.3, 0.4]
     alpha_list = [0.0]
     beta_list = [0.1]
     # Set up the graph and nodes
@@ -637,7 +617,7 @@ def main():
 if __name__ == "__main__":
     # 1. One Trial Simulation. For test & software development
 
-    # main_one_trial(algorithm_type='Dynamic Programming', start_node='Arar',alpha=0.0, beta=0.1)
+    # main_one_trial(algorithm_type='Dynamic Programming', start_node='Arar',alpha=0.0, beta=0.0)
     # main_one_trial(algorithm_type='Dijkstra', start_node='Yanbu',alpha=alpha, beta=beta)
 
 
