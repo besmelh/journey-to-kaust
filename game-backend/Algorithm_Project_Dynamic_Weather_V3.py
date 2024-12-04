@@ -17,7 +17,7 @@ import heapq
 # Configuration Constants
 #--------------------------------------------------------------------------------
 
-DAILY_HOURS = 6
+DAILY_HOURS = 5
 CAR_SPEED = 100
 MAX_DAYS = 30
 WEATHER_SET = ['Hot', 'Clear', 'Sandstorm']
@@ -99,7 +99,7 @@ def calculate_expected_weight(edge_weight, source, target, dict_graphs_daily, pr
     return expected_weight
 
 
-def dijkstra(graph, start, end, dict_graphs_daily=None, pre_processed_distances=None, alpha = 0.2, beta = 0.3):
+def dijkstra(graph, start, end, dict_graphs_daily=None, pre_processed_distances=None, alpha = 0.2, beta = 0.7):
     visited = {start: 0}
     path = {}
     nodes = set(graph.vs['name'])
@@ -125,8 +125,8 @@ def dijkstra(graph, start, end, dict_graphs_daily=None, pre_processed_distances=
             edge = graph.es[graph.get_eid(min_node, neighbor_name)]
             # Calculate the weight of the edge based on the weather probabilities
             weight = edge['weight']
-            if dict_graphs_daily is not None:
-                weight = calculate_expected_weight(weight, min_node, neighbor_name, dict_graphs_daily, pre_processed_distances, alpha, beta)
+            # if dict_graphs_daily is not None:
+                # weight = calculate_expected_weight(weight, min_node, neighbor_name, dict_graphs_daily, pre_processed_distances, alpha, beta)
 
             weight += current_weight
 
@@ -149,9 +149,7 @@ def dijkstra(graph, start, end, dict_graphs_daily=None, pre_processed_distances=
     return reconstructed_path, visited[end]
 
 
-
-
-def dynamic_programming(graph, start, end, dict_graphs_daily=None, pre_processed_distances=None, alpha = 0.2, beta = 0.3):  # bellman_ford
+def dynamic_programming(graph, start, end, dict_graphs_daily=None, pre_processed_distances=None, alpha = 0.2, beta = 0.7):  # bellman_ford
     # Initialize distances and path storage
     distances = {vertex: float('inf') for vertex in graph.vs['name']}
     distances[start] = 0
@@ -167,8 +165,8 @@ def dynamic_programming(graph, start, end, dict_graphs_daily=None, pre_processed
 
             # Calculate expected weight based on weather probabilities
             # expected_weight = sum(weight / SPEED_SET[weather] * probability for weather, probability in zip(WEATHER_SET, PROBABILITY_WEATHER))
-            expected_weight = calculate_expected_weight(weight, source, target, dict_graphs_daily, pre_processed_distances, alpha, beta)
-
+            # expected_weight = calculate_expected_weight(weight, source, target, dict_graphs_daily, pre_processed_distances, alpha, beta)
+            expected_weight = weight
             # Relaxation step for source -> target
             if distances[source] + expected_weight < distances[target]:
                 distances[target] = distances[source] + expected_weight
@@ -180,6 +178,7 @@ def dynamic_programming(graph, start, end, dict_graphs_daily=None, pre_processed
                 paths[source] = paths[target] + [source]
 
     return paths[end], distances[end]  # Return the path and the total cost
+
 
 def precompute_distances_to_endpoint(graph, endpoint):
 
@@ -234,7 +233,7 @@ def add_end_of_day_summary(daily_info, day, from_node, to_node, remaining_distan
     
 def simulate_journey(dict_graphs, graph, edges, start_node = 'Hail', end_node = END_NODE, daily_hours = DAILY_HOURS,
                      car_speed = CAR_SPEED, max_days=MAX_DAYS, algorithm_type='Dijkstra', random_seed = 0,
-                     pre_processed_distances=None, alpha = 0.2, beta = 0.3):
+                     pre_processed_distances=None, alpha = 0.2, beta = 0.7):
     
     """
     Simulates a journey from the start node to the end node using the specified algorithm, taking into account daily travel limits and dynamic edge weights based on conditions.   
@@ -297,7 +296,7 @@ def simulate_journey(dict_graphs, graph, edges, start_node = 'Hail', end_node = 
             # Calculate the travel cost (time) based on the current weather
             # cost = dict_graphs_daily[edge[0]][1][dict_graphs_daily[edge[0]][0].index(edge[1])] / (SPEED_SET[weather] * car_speed)
             cost = dict_graphs_daily[edge[0]][edge[1]]/ (SPEED_SET[weather] * car_speed)
-
+            cost = calculate_expected_weight(cost, edge[0], edge[1], dict_graphs_daily, pre_processed_distances, alpha, beta)
             costs.append(cost if cost < 100 else float('inf'))
 
             # Update the weight of the edge in the graph
@@ -414,7 +413,7 @@ def draw_graph_with_path(graph, path, vertices):
 
 
 def run_simulation_once(dict_graph, graph, edges, start_node, algorithm_type, random_seed, pre_processed_distances=None,
-                        alpha = 0.2, beta = 0.3):
+                        alpha = 0.2, beta = 0.7):
     """Runs simulate_journey once and records success, path, days, runtime, and memory usage."""
     start_time = time.time()
     tracemalloc.start()
@@ -457,7 +456,7 @@ def gather_statistics(results):
     }
 
 
-def run_all_simulations(dict_graph, graph, edges, start_nodes, num_runs = 1, alpha = 0.2, beta = 0.3):
+def run_all_simulations(dict_graph, graph, edges, start_nodes, num_runs = 1, alpha = 0.2, beta = 0.7):
     """Runs all simulations for each start node and algorithm type, returns a list of aggregated results."""
     results = []
     pre_processed_distances = precompute_distances_to_endpoint(graph, END_NODE)
@@ -503,7 +502,7 @@ def run_all_simulations(dict_graph, graph, edges, start_nodes, num_runs = 1, alp
 
     return results
 
-def save_results_to_csv(results, num_runs,alpha = 0.2, beta = 0.3):
+def save_results_to_csv(results, num_runs,alpha = 0.2, beta = 0.7):
     """Saves the results to a CSV file with the number of runs in the filename."""
     df = pd.DataFrame(results)
     filename = f"simulate_journey_results_{num_runs}runs_alpha_{alpha}_beta_{beta}.csv"
@@ -575,7 +574,7 @@ def initialize_dict_graph():
 # Main Function
 #--------------------------------------------------------------------------------
 
-def main_one_trial(algorithm_type='Dijkstra',start_node = 'Hail' ,alpha = 0.2, beta = 0.3):
+def main_one_trial(algorithm_type='Dijkstra',start_node = 'Hail' ,alpha = 0.2, beta = 0.7):
 
     # Set up the graph and nodes
     dict_graph, graph, weights, vertices, edges = setup_graph()
@@ -604,8 +603,8 @@ def main():
     Alpha is the weight for the weather conditions, beta is the weight for the precomputed distances
     '''
 
-    alpha_list = [0.0, 0.1, 0.2, 0.3, 0.4]
-    beta_list = [0.0, 0.1, 0.2, 0.3, 0.4]
+    alpha_list = [0.0]
+    beta_list = [0.1]
     # Set up the graph and nodes
     dict_graph, graph, weights, vertices, edges = setup_graph()
     start_nodes = [node for node in vertices if node != END_NODE]
@@ -618,7 +617,7 @@ def main():
 if __name__ == "__main__":
     # 1. One Trial Simulation. For test & software development
 
-    # main_one_trial(algorithm_type='Dynamic Programming', start_node='Arar',alpha=0.0, beta=0.1)
+    # main_one_trial(algorithm_type='Dynamic Programming', start_node='Arar',alpha=0.0, beta=0.0)
     # main_one_trial(algorithm_type='Dijkstra', start_node='Yanbu',alpha=alpha, beta=beta)
 
 

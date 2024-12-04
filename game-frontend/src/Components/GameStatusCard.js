@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import styled from '@emotion/styled';
-import { gameApi } from '../services/gameApi';
 
 const Card = styled.div`
   background: rgba(250, 250, 250, 1);
@@ -78,6 +77,8 @@ const SPEED_MULTIPLIERS = {
   Sandstorm: 0,
 };
 
+// In GameStatusCard.js, modify the card to show partial travel progress:
+
 const GameStatusCard = ({
   gameState,
   selected_city,
@@ -85,9 +86,30 @@ const GameStatusCard = ({
   onWait,
   style,
 }) => {
-  const [loading, setLoading] = useState(false);
-
   const getTravelButtonProps = () => {
+    // During partial travel
+    if (gameState.partial_travel) {
+      const { from, to } = gameState.partial_travel;
+      const edgeKey = `${from}-${to}`;
+      const weather = gameState.daily_weather[edgeKey]?.weather;
+
+      if (weather === 'Sandstorm') {
+        return {
+          text: 'Cannot continue - Sandstorm',
+          disabled: true,
+          variant: 'gray',
+        };
+      }
+
+      return {
+        text: 'Continue Journey',
+        disabled: false,
+        variant: 'green',
+        onClick: onTravel, // No need to pass destination, backend knows it
+      };
+    }
+
+    // Regular travel logic...
     if (!selected_city) {
       return {
         text: 'No city selected',
@@ -96,18 +118,9 @@ const GameStatusCard = ({
       };
     }
 
-    console.log('selected city: ', selected_city);
-
-    // Get edge weather
     const edgeKey = `${gameState.current_city}-${selected_city}`;
-    const reverseEdgeKey = `${selected_city}-${gameState.current_city}`;
-    const weather =
-      gameState.daily_weather[edgeKey]?.weather ||
-      gameState.daily_weather[reverseEdgeKey]?.weather;
+    const weather = gameState.daily_weather[edgeKey]?.weather;
 
-    console.log('weather to selected city: ', weather);
-
-    // Check if weather permits travel
     if (weather === 'Sandstorm') {
       return {
         text: `Cannot travel during sandstorm`,
@@ -116,30 +129,25 @@ const GameStatusCard = ({
       };
     }
 
-    // Calculate required hours
-
     const distance =
       gameState.graph_state[gameState.current_city][selected_city];
     const speedMultiplier = SPEED_MULTIPLIERS[weather];
     const timeInHours = distance / (100 * speedMultiplier);
 
-    console.log('timeInHours: ', timeInHours);
-    console.log('hours_remaining: ', gameState.hours_remaining);
-
     if (timeInHours > gameState.hours_remaining) {
-      console.log('timeInHours > gameState.hours_remaining');
       return {
-        text: `${selected_city} cannot be reached today.`,
-        disabled: true,
-        variant: 'gray',
+        text: `Begin travel to ${selected_city}`,
+        disabled: false,
+        variant: 'green',
+        onClick: () => onTravel(selected_city),
       };
     }
 
-    console.log('passed all checks. can travel to selection');
     return {
       text: `Travel to ${selected_city}`,
       disabled: false,
       variant: 'green',
+      onClick: () => onTravel(selected_city),
     };
   };
 
@@ -160,32 +168,42 @@ const GameStatusCard = ({
       </StatusRow>
 
       <StatusRow>
-        <Label>Current city:</Label>
-        <Value>{gameState.current_city}</Value>
+        <Label>Location:</Label>
+        <Value>
+          {gameState.partial_travel
+            ? `Between ${gameState.partial_travel.from} and ${gameState.partial_travel.to}`
+            : gameState.current_city}
+        </Value>
       </StatusRow>
 
-      <StatusRow>
-        <Label>Selected city:</Label>
-        <Value>{selected_city}</Value>
-      </StatusRow>
+      {gameState.partial_travel && (
+        <StatusRow>
+          <Label>Progress:</Label>
+          <Value>{Math.round(gameState.partial_travel.progress * 100)}%</Value>
+        </StatusRow>
+      )}
 
-      <StatusRow>
-        <Label>Neigboring cities:</Label>
-        <Value>{gameState.neighboring_cities}</Value>
-      </StatusRow>
+      {!gameState.partial_travel && selected_city && (
+        <StatusRow>
+          <Label>Selected city:</Label>
+          <Value>{selected_city}</Value>
+        </StatusRow>
+      )}
 
       <ButtonContainer>
+        {/* Single travel button that handles both cases */}
         {travelButtonProps.variant === 'gray' ? (
-          <GrayButton disabled={travelButtonProps.disabled}>
-            {travelButtonProps.text}
-          </GrayButton>
+          <GrayButton disabled={true}>{travelButtonProps.text}</GrayButton>
         ) : (
-          <GreenButton onClick={onTravel} disabled={travelButtonProps.disabled}>
+          <GreenButton onClick={travelButtonProps.onClick} disabled={false}>
             {travelButtonProps.text}
           </GreenButton>
         )}
+
         <GreenButton onClick={onWait}>
-          Wait in {gameState.current_city}
+          {gameState.partial_travel
+            ? 'Camp here for the night'
+            : `Wait in ${gameState.current_city}`}
         </GreenButton>
       </ButtonContainer>
     </Card>

@@ -4,6 +4,7 @@ import MapGraph from './MapGraph';
 import GameStatusCard from './GameStatusCard';
 import Legend from './Legend';
 import { gameApi } from '../services/gameApi';
+import GameCompletionModal from './GameCompletionModal';
 
 const Container = styled.div`
   width: 90%;
@@ -23,6 +24,9 @@ const Cards = styled.div`
 const MAX_HOURS = 5;
 
 const MainGame = () => {
+  const [showCompletion, setShowCompletion] = useState(false);
+  const [gameResults, setGameResults] = useState(null);
+
   const [selected_city, setSelectedCity] = useState(null);
   const [gameState, setGameState] = useState({
     day: 1,
@@ -86,22 +90,24 @@ const MainGame = () => {
   };
 
   const handleCitySelect = (city) => {
-    // Check if the city is a neighboring city using the graphState
-    const isNeighbor =
-      gameState.graph_state[gameState.current_city] &&
-      gameState.graph_state[gameState.current_city][city] !== undefined;
+    // During partial travel, don't allow new city selection
+    if (gameState.partial_travel) return;
 
-    if (isNeighbor) {
+    if (gameState.neighboring_cities.includes(city)) {
       setSelectedCity(city);
     }
   };
 
   const handleTravel = async () => {
-    if (!selected_city) return;
-
     try {
       const sessionId = localStorage.getItem('gameSessionId');
-      const updatedState = await gameApi.travelToCity(sessionId, selected_city);
+      // If in partial travel, use the destination from partial_travel state
+      const destination = gameState.partial_travel
+        ? gameState.partial_travel.to
+        : selected_city;
+
+      if (!selected_city) return;
+      const updatedState = await gameApi.travelToCity(sessionId, destination);
 
       if (updatedState.travel_possible) {
         // Extract new neighboring cities from the updated graph state
@@ -126,6 +132,18 @@ const MainGame = () => {
         }));
 
         console.log('travel action data: ', gameState);
+
+        // If not in partial travel, clear the selected city
+        if (!updatedState.partial_travel) {
+          setSelectedCity(null);
+        }
+
+        // Check if reached Thuwal
+        if (updatedState.current_city === 'Thuwal') {
+          const results = await gameApi.completeGame(sessionId);
+          setGameResults(results);
+          setShowCompletion(true);
+        }
       }
 
       setSelectedCity(null);
@@ -176,6 +194,19 @@ const MainGame = () => {
         />
         <Legend />
       </Cards>
+      <GameCompletionModal
+        isOpen={showCompletion}
+        onClose={() => {
+          setShowCompletion(false);
+          initializeGame(); // Reset the game
+        }}
+        score={gameResults?.score}
+        daysCount={gameResults?.days_taken}
+        optimalDays={gameResults?.optimal_days}
+        userPath={gameResults?.user_path}
+        optimalPath={gameResults?.optimal_path}
+        startCity={gameResults?.start_city}
+      />
     </Container>
   );
 };

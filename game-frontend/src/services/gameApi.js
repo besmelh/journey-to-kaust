@@ -3,6 +3,7 @@ const API_URL = process.env.REACT_APP_API_URL;
 
 export const gameApi = {
   async initGame(data) {
+    console.log('calling init-game...');
     try {
       const response = await fetch(`${API_URL}/api/init-game`, {
         method: 'POST',
@@ -91,6 +92,25 @@ export const gameApi = {
       return response.json();
     } catch (error) {
       console.error('Wait in city error:', error);
+      throw error;
+    }
+  },
+
+  async completeGame(sessionId) {
+    try {
+      console.log('calling completeGame...');
+      const response = await fetch(`${API_URL}/api/complete-game`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ session_id: sessionId }),
+      });
+      if (!response.ok) throw new Error('Failed to complete game');
+      return response.json();
+    } catch (error) {
+      console.error('Complete game error:', error);
       throw error;
     }
   },
