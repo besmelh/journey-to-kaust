@@ -299,6 +299,7 @@ const MapGraph = ({ style, gameState = {}, onCitySelect, selected_city }) => {
   };
 
   const getEdgeWeather = (city1, city2) => {
+    // Try both possible formats
     const edgeKey = `${city1}-${city2}`;
     const reverseEdgeKey = `${city2}-${city1}`;
     return (
@@ -316,16 +317,16 @@ const MapGraph = ({ style, gameState = {}, onCitySelect, selected_city }) => {
     // const normalizedWeight = Math.min(weight / 800, 1);
 
     // color all edges based on weather
-    // if (weather === 'Sandstorm') return SANDSTORM; // Sandstorm - Red
-    // if (weather === 'Hot') return HOT;
-    // if (weather === 'Clear') return CLEAR;
+    if (weather === 'Sandstorm') return SANDSTORM; // Sandstorm - Red
+    if (weather === 'Hot') return HOT;
+    if (weather === 'Clear') return CLEAR;
 
     // color connected edges to current city
-    if (isConnectedToCurrentCity) {
-      if (weather === 'Sandstorm') return SANDSTORM; // Sandstorm - Red
-      if (weather === 'Hot') return HOT;
-      if (weather === 'Clear') return CLEAR;
-    }
+    // if (isConnectedToCurrentCity) {
+    //   if (weather === 'Sandstorm') return SANDSTORM; // Sandstorm - Red
+    //   if (weather === 'Hot') return HOT;
+    //   if (weather === 'Clear') return CLEAR;
+    // }
     return GREY; // Unconnected - Grey
   };
 

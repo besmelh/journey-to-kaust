@@ -3,6 +3,7 @@ const API_URL = process.env.REACT_APP_API_URL;
 
 export const gameApi = {
   async initGame(data) {
+    console.log('calling init-game...');
     try {
       const response = await fetch(`${API_URL}/api/init-game`, {
         method: 'POST',
@@ -97,7 +98,7 @@ export const gameApi = {
 
   async completeGame(sessionId) {
     try {
-      console.log("calling completeGame...")
+      console.log('calling completeGame...');
       const response = await fetch(`${API_URL}/api/complete-game`, {
         method: 'POST',
         credentials: 'include',

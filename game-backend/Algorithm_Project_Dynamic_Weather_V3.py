@@ -17,7 +17,7 @@ import heapq
 # Configuration Constants
 #--------------------------------------------------------------------------------
 
-DAILY_HOURS = 6
+DAILY_HOURS = 5
 CAR_SPEED = 100
 MAX_DAYS = 30
 WEATHER_SET = ['Hot', 'Clear', 'Sandstorm']
@@ -235,10 +235,13 @@ def add_end_of_day_summary(daily_info, day, from_node, to_node, remaining_distan
     
 def simulate_journey(dict_graphs, graph, edges, start_node = 'Hail', end_node = END_NODE, daily_hours = DAILY_HOURS,
                      car_speed = CAR_SPEED, max_days=MAX_DAYS, algorithm_type='Dijkstra', random_seed = 0,
-                     pre_processed_distances=None, alpha = 0.2, beta = 0.3):
+                     pre_processed_distances=None, alpha = 0.2, beta = 0.3, weather_history=None):
     
     """
     Simulates a journey from the start node to the end node using the specified algorithm, taking into account daily travel limits and dynamic edge weights based on conditions.   
+    """
+    """
+    Modified to accept weather_history parameter for consistent weather conditions
     """
         
     dict_graphs_daily = copy.deepcopy(dict_graphs) # for updating the remaining distance
@@ -252,11 +255,24 @@ def simulate_journey(dict_graphs, graph, edges, start_node = 'Hail', end_node = 
     print("student start at ", start_node)
     for i in range(max_days):
         print(f"Day {i + 1}")
+         
         # set the random seed for reproducibility
-        random.seed(i + random_seed)
+        # random.seed(i + random_seed)
+        # daily_weather = generate_daily_weather(edges, WEATHER_SET, PROBABILITY_WEATHER) # for all edges       
 
-        daily_weather = generate_daily_weather(edges, WEATHER_SET, PROBABILITY_WEATHER) # for all edges
+        # Use provided weather if available, otherwise generate new
+        if weather_history and i + 1 in weather_history:
+            daily_weather = {}
+            weather_data = weather_history[i + 1]
+            for edge_key, weather_info in weather_data.items():
+                city1, city2 = edge_key.split('-')
+                daily_weather[(city1, city2)] = weather_info['weather']
+        else:
+            random.seed(i + random_seed)
+            daily_weather = generate_daily_weather(edges, WEATHER_SET, PROBABILITY_WEATHER)
+
         print(f"Daily weather: {daily_weather}")
+        
         # Initialize daily record
         daily_info[i] = {
             'weather': daily_weather, 

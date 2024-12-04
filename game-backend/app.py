@@ -13,9 +13,9 @@ app = Flask(__name__)
 # CORS(app, resources={r"/*": {"origins": "*"}})
 CORS(app, resources={
     r"/api/*": {
-        "origins": "http://localhost:3000",
+        "origins": ["http://localhost:3000"],
         "methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["Content-Type"],
+        "allow_headers": ["Content-Type", "Authorization"],
         "supports_credentials": True
     }
 })
@@ -23,11 +23,10 @@ CORS(app, resources={
 @app.after_request
 def after_request(response):
     response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
     response.headers.add('Access-Control-Allow-Credentials', 'true')
     return response
-
 
 
 game_sessions = {}
@@ -41,20 +40,18 @@ def home():
 def init_game():
     print("running init-game...")
     session_id = request.json.get('session_id')
-    print("session_id: ", session_id)
     dict_graph, graph, weights, vertices, edges = setup_graph()
     start_cities = [city for city in vertices if city != 'Thuwal']
-    # start_city = random.choice(start_cities)
-    start_city = "Halaban"
-    print("start_city: ", start_city)
+    start_city = random.choice(start_cities)
 
-    # Generate weather for each road
+    # Generate weather using string keys instead of tuples
     daily_weather = {}
     for city1, connections in dict_graph.items():
         for city2 in connections:
             weather = random.choices(WEATHER_SET, PROBABILITY_WEATHER)[0]
+            # Create string keys in both directions
             daily_weather[f"{city1}-{city2}"] = {'weather': weather}
-
+            daily_weather[f"{city2}-{city1}"] = {'weather': weather}  # Store reverse direction
 
     data = {
         'start_city': start_city,
@@ -65,12 +62,14 @@ def init_game():
         'daily_weather': daily_weather,
         'graph_state': dict_graph,
         'neighboring_cities': list(dict_graph[start_city].keys()),
-        'visited_cities': [start_city]
+        'visited_cities': [start_city],
+        'weather_history': {
+            1: daily_weather
+        }
     }
     
-    
     game_sessions[session_id] = data
-    print("data: ", data)
+    print("Session data:", data)  # Debug print
     return jsonify(data)
 
 @app.route('/api/game-status', methods=['GET'])
@@ -150,22 +149,15 @@ def wait():
     try:
         print("Running wait endpoint...")
         session_id = request.json.get('session_id')
-        
-        # if not session_id:
-        #     return jsonify({'error': 'No session_id provided'}), 400
-            
-        # if session_id not in game_sessions:
-        #     return jsonify({'error': 'Invalid session_id'}), 400
-            
         session = game_sessions[session_id]
     
-        # Generate new weather just like algorithm
+        # Generate new weather using string keys
         daily_weather = {}
         for city1, connections in session['graph_state'].items():
             for city2 in connections.keys():
-                edge_key = f"{city1}-{city2}"
                 weather = random.choices(WEATHER_SET, PROBABILITY_WEATHER)[0]
-                daily_weather[edge_key] = {'weather': weather}
+                daily_weather[f"{city1}-{city2}"] = {'weather': weather}
+                daily_weather[f"{city2}-{city1}"] = {'weather': weather}
         
         current_city = session['current_city']
         neighboring_cities = list(session['graph_state'][current_city].keys())
@@ -174,6 +166,7 @@ def wait():
         session['days_left'] -= 1
         session['hours_remaining'] = DAILY_HOURS
         session['daily_weather'] = daily_weather
+        session['weather_history'][session['day']] = daily_weather
         
         data = {
             'current_city': session['current_city'],
@@ -185,43 +178,49 @@ def wait():
             'neighboring_cities': neighboring_cities
         }
 
-        print(" wait action api data...", data)
-
         return jsonify(data)
     
     except Exception as e:
         print(f"Error in wait endpoint: {str(e)}")
         return jsonify({'error': str(e)}), 500
-
-
+    
 @app.route('/api/complete-game', methods=['POST'])
 def complete_game():
     try:
         session_id = request.json.get('session_id')
+        if not session_id or session_id not in game_sessions:
+            return jsonify({'error': 'Invalid session'}), 400
+            
         session = game_sessions[session_id]
-        
-        # Calculate optimal path using Dijkstra's algorithm
+        if not session.get('start_city'):
+            return jsonify({'error': 'Invalid game state'}), 400
+            
         dict_graph, graph, _, vertices, edges = setup_graph()
-        
-        # Calculate pre-processed distances before simulation
         pre_processed_distances = precompute_distances_to_endpoint(graph, END_NODE)
         
-        # Add alpha and beta parameters
-        alpha = 0.2  # You can adjust these values
-        beta = 0.3   # based on your requirements
+        try:
+            success, optimal_path, optimal_days, _ = simulate_journey(
+                dict_graph, 
+                graph, 
+                edges,
+                start_node=session['start_city'],
+                algorithm_type='Dijkstra',
+                pre_processed_distances=pre_processed_distances,
+                alpha=0.2,
+                beta=0.3,
+                weather_history=session['weather_history']
+            )
+        except Exception as e:
+            print(f"Simulation error: {str(e)}")
+            return jsonify({
+                'score': 50,  # fallback score
+                'days_taken': session['day'],
+                'optimal_days': None,
+                'user_path': session['visited_cities'],
+                'optimal_path': None,
+                'start_city': session['start_city']
+            })
         
-        success, optimal_path, optimal_days, _ = simulate_journey(
-            dict_graph, 
-            graph, 
-            edges,
-            start_node=session['start_city'],
-            algorithm_type='Dijkstra',
-            pre_processed_distances=pre_processed_distances,
-            alpha=alpha,
-            beta=beta
-        )
-        
-        # Calculate score based on days taken vs optimal solution
         user_days = session['day']
         max_score = 100
         score = max(0, max_score - (user_days - optimal_days) * 10)
@@ -235,13 +234,14 @@ def complete_game():
             'start_city': session['start_city']
         }
         
-        print("Game completion result:", result)  # Debug print
+        print("Game completion result:", result)
         return jsonify(result)
         
     except Exception as e:
         print(f"Error in complete_game endpoint: {str(e)}")
-        print(f"Full traceback: {traceback.format_exc()}")  # Add this import at the top
+        print(f"Full traceback: {traceback.format_exc()}")
         return jsonify({'error': str(e)}), 500
+
 
 # *******************************************
 
