@@ -10,6 +10,7 @@ export const gameApi = {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
+          Accept: 'application/json',
         },
         body: JSON.stringify(data),
       });
@@ -33,6 +34,7 @@ export const gameApi = {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
+          Accept: 'application/json',
         },
         body: JSON.stringify({ session_id: sessionId }),
       });
@@ -59,6 +61,7 @@ export const gameApi = {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
+          Accept: 'application/json',
         },
         body: JSON.stringify({
           session_id: sessionId,
@@ -84,6 +87,7 @@ export const gameApi = {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
+          Accept: 'application/json',
         },
         body: JSON.stringify({ session_id: sessionId }),
       });
@@ -104,6 +108,7 @@ export const gameApi = {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
+          Accept: 'application/json',
         },
         body: JSON.stringify({ session_id: sessionId }),
       });
