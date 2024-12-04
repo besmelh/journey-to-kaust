@@ -99,7 +99,7 @@ def calculate_expected_weight(edge_weight, source, target, dict_graphs_daily, pr
     return expected_weight
 
 
-def dijkstra(graph, start, end, dict_graphs_daily=None, pre_processed_distances=None, alpha = 0.2, beta = 0.3):
+def dijkstra(graph, start, end, dict_graphs_daily=None, pre_processed_distances=None, alpha = 0.2, beta = 0.7):
     visited = {start: 0}
     path = {}
     nodes = set(graph.vs['name'])
@@ -149,7 +149,7 @@ def dijkstra(graph, start, end, dict_graphs_daily=None, pre_processed_distances=
     return reconstructed_path, visited[end]
 
 
-def dynamic_programming(graph, start, end, dict_graphs_daily=None, pre_processed_distances=None, alpha = 0.2, beta = 0.3):  # bellman_ford
+def dynamic_programming(graph, start, end, dict_graphs_daily=None, pre_processed_distances=None, alpha = 0.2, beta = 0.7):  # bellman_ford
     # Initialize distances and path storage
     distances = {vertex: float('inf') for vertex in graph.vs['name']}
     distances[start] = 0
@@ -233,7 +233,7 @@ def add_end_of_day_summary(daily_info, day, from_node, to_node, remaining_distan
     
 def simulate_journey(dict_graphs, graph, edges, start_node = 'Hail', end_node = END_NODE, daily_hours = DAILY_HOURS,
                      car_speed = CAR_SPEED, max_days=MAX_DAYS, algorithm_type='Dijkstra', random_seed = 0,
-                     pre_processed_distances=None, alpha = 0.2, beta = 0.3):
+                     pre_processed_distances=None, alpha = 0.2, beta = 0.7):
     
     """
     Simulates a journey from the start node to the end node using the specified algorithm, taking into account daily travel limits and dynamic edge weights based on conditions.   
@@ -413,7 +413,7 @@ def draw_graph_with_path(graph, path, vertices):
 
 
 def run_simulation_once(dict_graph, graph, edges, start_node, algorithm_type, random_seed, pre_processed_distances=None,
-                        alpha = 0.2, beta = 0.3):
+                        alpha = 0.2, beta = 0.7):
     """Runs simulate_journey once and records success, path, days, runtime, and memory usage."""
     start_time = time.time()
     tracemalloc.start()
@@ -456,7 +456,7 @@ def gather_statistics(results):
     }
 
 
-def run_all_simulations(dict_graph, graph, edges, start_nodes, num_runs = 1, alpha = 0.2, beta = 0.3):
+def run_all_simulations(dict_graph, graph, edges, start_nodes, num_runs = 1, alpha = 0.2, beta = 0.7):
     """Runs all simulations for each start node and algorithm type, returns a list of aggregated results."""
     results = []
     pre_processed_distances = precompute_distances_to_endpoint(graph, END_NODE)
@@ -502,7 +502,7 @@ def run_all_simulations(dict_graph, graph, edges, start_nodes, num_runs = 1, alp
 
     return results
 
-def save_results_to_csv(results, num_runs,alpha = 0.2, beta = 0.3):
+def save_results_to_csv(results, num_runs,alpha = 0.2, beta = 0.7):
     """Saves the results to a CSV file with the number of runs in the filename."""
     df = pd.DataFrame(results)
     filename = f"simulate_journey_results_{num_runs}runs_alpha_{alpha}_beta_{beta}.csv"
@@ -574,7 +574,7 @@ def initialize_dict_graph():
 # Main Function
 #--------------------------------------------------------------------------------
 
-def main_one_trial(algorithm_type='Dijkstra',start_node = 'Hail' ,alpha = 0.2, beta = 0.3):
+def main_one_trial(algorithm_type='Dijkstra',start_node = 'Hail' ,alpha = 0.2, beta = 0.7):
 
     # Set up the graph and nodes
     dict_graph, graph, weights, vertices, edges = setup_graph()

@@ -207,7 +207,7 @@ def complete_game():
                 algorithm_type='Dijkstra',
                 pre_processed_distances=pre_processed_distances,
                 alpha=0.2,
-                beta=0.3,
+                beta=0.7,
                 # weather_history=session['weather_history']
             )
         except Exception as e:
