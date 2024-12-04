@@ -3,8 +3,10 @@ from flask_cors import CORS
 import random
 from Algorithm_Project_Dynamic_Weather_V3 import (
     setup_graph, simulate_journey, generate_daily_weather,
-    WEATHER_SET, PROBABILITY_WEATHER, DAILY_HOURS
+    WEATHER_SET, PROBABILITY_WEATHER, DAILY_HOURS, END_NODE,
+    precompute_distances_to_endpoint
 )
+import traceback
 
 app = Flask(__name__)
 # CORS(app)
@@ -42,7 +44,8 @@ def init_game():
     print("session_id: ", session_id)
     dict_graph, graph, weights, vertices, edges = setup_graph()
     start_cities = [city for city in vertices if city != 'Thuwal']
-    start_city = random.choice(start_cities)
+    # start_city = random.choice(start_cities)
+    start_city = "Halaban"
     print("start_city: ", start_city)
 
     # Generate weather for each road
@@ -191,6 +194,54 @@ def wait():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/complete-game', methods=['POST'])
+def complete_game():
+    try:
+        session_id = request.json.get('session_id')
+        session = game_sessions[session_id]
+        
+        # Calculate optimal path using Dijkstra's algorithm
+        dict_graph, graph, _, vertices, edges = setup_graph()
+        
+        # Calculate pre-processed distances before simulation
+        pre_processed_distances = precompute_distances_to_endpoint(graph, END_NODE)
+        
+        # Add alpha and beta parameters
+        alpha = 0.2  # You can adjust these values
+        beta = 0.3   # based on your requirements
+        
+        success, optimal_path, optimal_days, _ = simulate_journey(
+            dict_graph, 
+            graph, 
+            edges,
+            start_node=session['start_city'],
+            algorithm_type='Dijkstra',
+            pre_processed_distances=pre_processed_distances,
+            alpha=alpha,
+            beta=beta
+        )
+        
+        # Calculate score based on days taken vs optimal solution
+        user_days = session['day']
+        max_score = 100
+        score = max(0, max_score - (user_days - optimal_days) * 10)
+        
+        result = {
+            'score': score,
+            'days_taken': user_days,
+            'optimal_days': optimal_days,
+            'user_path': session['visited_cities'],
+            'optimal_path': optimal_path,
+            'start_city': session['start_city']
+        }
+        
+        print("Game completion result:", result)  # Debug print
+        return jsonify(result)
+        
+    except Exception as e:
+        print(f"Error in complete_game endpoint: {str(e)}")
+        print(f"Full traceback: {traceback.format_exc()}")  # Add this import at the top
+        return jsonify({'error': str(e)}), 500
 
 # *******************************************
 

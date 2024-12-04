@@ -4,6 +4,7 @@ import MapGraph from './MapGraph';
 import GameStatusCard from './GameStatusCard';
 import Legend from './Legend';
 import { gameApi } from '../services/gameApi';
+import GameCompletionModal from './GameCompletionModal';
 
 const Container = styled.div`
   width: 90%;
@@ -23,6 +24,9 @@ const Cards = styled.div`
 const MAX_HOURS = 5;
 
 const MainGame = () => {
+  const [showCompletion, setShowCompletion] = useState(false);
+  const [gameResults, setGameResults] = useState(null);
+
   const [selected_city, setSelectedCity] = useState(null);
   const [gameState, setGameState] = useState({
     day: 1,
@@ -146,6 +150,13 @@ const MainGame = () => {
         }));
 
         console.log('travel action data: ', gameState);
+
+        // Check if reached Thuwal
+        if (updatedState.current_city === 'Thuwal') {
+          const results = await gameApi.completeGame(sessionId);
+          setGameResults(results);
+          setShowCompletion(true);
+        }
       }
 
       setSelectedCity(null);
@@ -194,6 +205,19 @@ const MainGame = () => {
         />
         <Legend />
       </Cards>
+      <GameCompletionModal
+        isOpen={showCompletion}
+        onClose={() => {
+          setShowCompletion(false);
+          initializeGame(); // Reset the game
+        }}
+        score={gameResults?.score}
+        daysCount={gameResults?.days_taken}
+        optimalDays={gameResults?.optimal_days}
+        userPath={gameResults?.user_path}
+        optimalPath={gameResults?.optimal_path}
+        startCity={gameResults?.start_city}
+      />
     </Container>
   );
 };

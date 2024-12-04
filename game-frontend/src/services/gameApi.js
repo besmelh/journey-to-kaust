@@ -94,4 +94,23 @@ export const gameApi = {
       throw error;
     }
   },
+
+  async completeGame(sessionId) {
+    try {
+      console.log("calling completeGame...")
+      const response = await fetch(`${API_URL}/api/complete-game`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ session_id: sessionId }),
+      });
+      if (!response.ok) throw new Error('Failed to complete game');
+      return response.json();
+    } catch (error) {
+      console.error('Complete game error:', error);
+      throw error;
+    }
+  },
 };

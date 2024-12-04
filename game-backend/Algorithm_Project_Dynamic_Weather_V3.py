@@ -125,8 +125,8 @@ def dijkstra(graph, start, end, dict_graphs_daily=None, pre_processed_distances=
             edge = graph.es[graph.get_eid(min_node, neighbor_name)]
             # Calculate the weight of the edge based on the weather probabilities
             weight = edge['weight']
-            if dict_graphs_daily is not None:
-                weight = calculate_expected_weight(weight, min_node, neighbor_name, dict_graphs_daily, pre_processed_distances, alpha, beta)
+            # if dict_graphs_daily is not None:
+                # weight = calculate_expected_weight(weight, min_node, neighbor_name, dict_graphs_daily, pre_processed_distances, alpha, beta)
 
             weight += current_weight
 
@@ -167,7 +167,8 @@ def dynamic_programming(graph, start, end, dict_graphs_daily=None, pre_processed
 
             # Calculate expected weight based on weather probabilities
             # expected_weight = sum(weight / SPEED_SET[weather] * probability for weather, probability in zip(WEATHER_SET, PROBABILITY_WEATHER))
-            expected_weight = calculate_expected_weight(weight, source, target, dict_graphs_daily, pre_processed_distances, alpha, beta)
+            # expected_weight = calculate_expected_weight(weight, source, target, dict_graphs_daily, pre_processed_distances, alpha, beta)
+            expected_weight = weight
 
             # Relaxation step for source -> target
             if distances[source] + expected_weight < distances[target]:
@@ -297,7 +298,7 @@ def simulate_journey(dict_graphs, graph, edges, start_node = 'Hail', end_node = 
             # Calculate the travel cost (time) based on the current weather
             # cost = dict_graphs_daily[edge[0]][1][dict_graphs_daily[edge[0]][0].index(edge[1])] / (SPEED_SET[weather] * car_speed)
             cost = dict_graphs_daily[edge[0]][edge[1]]/ (SPEED_SET[weather] * car_speed)
-
+            cost = calculate_expected_weight(cost, edge[0], edge[1], dict_graphs_daily, pre_processed_distances, alpha, beta)
             costs.append(cost if cost < 100 else float('inf'))
 
             # Update the weight of the edge in the graph
@@ -604,8 +605,10 @@ def main():
     Alpha is the weight for the weather conditions, beta is the weight for the precomputed distances
     '''
 
-    alpha_list = [0.0, 0.1, 0.2, 0.3, 0.4]
-    beta_list = [0.0, 0.1, 0.2, 0.3, 0.4]
+    # alpha_list = [0.0, 0.1, 0.2, 0.3, 0.4]
+    # beta_list = [0.0, 0.1, 0.2, 0.3, 0.4]
+    alpha_list = [0.0]
+    beta_list = [0.1]
     # Set up the graph and nodes
     dict_graph, graph, weights, vertices, edges = setup_graph()
     start_nodes = [node for node in vertices if node != END_NODE]
