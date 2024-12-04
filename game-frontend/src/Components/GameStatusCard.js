@@ -97,7 +97,30 @@ const GameStatusCard = ({
       };
     }
 
-    // Get edge weather
+    // Special handling for partial travel state
+    if (gameState.partial_travel) {
+      if (selected_city === gameState.partial_travel.from) {
+        return {
+          text: `Return to ${selected_city}`,
+          disabled: false,
+          variant: 'green',
+        };
+      }
+      if (selected_city === gameState.partial_travel.to) {
+        return {
+          text: `Continue to ${selected_city}`,
+          disabled: false,
+          variant: 'green',
+        };
+      }
+      return {
+        text: 'Must complete or return from current travel',
+        disabled: true,
+        variant: 'gray',
+      };
+    }
+
+    // Regular travel logic
     const edgeKey = `${gameState.current_city}-${selected_city}`;
     const reverseEdgeKey = `${selected_city}-${gameState.current_city}`;
     const weather =
@@ -112,16 +135,14 @@ const GameStatusCard = ({
       };
     }
 
-    // Calculate required hours
     const distance =
       gameState.graph_state[gameState.current_city][selected_city];
     const speedMultiplier = SPEED_MULTIPLIERS[weather];
     const timeInHours = distance / (100 * speedMultiplier);
 
-    // For partial travel, show different message
     if (timeInHours > gameState.hours_remaining) {
       return {
-        text: `Travel partially toward ${selected_city}`,
+        text: `Begin travel to ${selected_city}`,
         disabled: false,
         variant: 'green',
       };
