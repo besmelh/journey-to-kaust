@@ -242,18 +242,27 @@ def wait():
                 daily_weather[f"{city1}-{city2}"] = {'weather': weather}
                 daily_weather[f"{city2}-{city1}"] = {'weather': weather}
         
-        # Handle continuation of partial travel
+        # Handle waiting during partial travel
         if session.get('partial_travel'):
             partial = session['partial_travel']
-            current_city = partial['from']
+            current_city = 'In transit'  # Show that we're between cities
             
-            # Reset the distance in graph_state to the remaining distance
-            session['graph_state'][partial['from']][partial['to']] = partial['remaining_distance']
-            session['graph_state'][partial['to']][partial['from']] = partial['remaining_distance']
+            # Check weather for the path we're on
+            edge_key = f"{partial['from']}-{partial['to']}"
+            new_weather = daily_weather[edge_key]['weather']
+            
+            # Keep track of our position between cities
+            neighboring_cities = [partial['from'], partial['to']]
+            
+            # If we hit a sandstorm while between cities, we stay in place
+            if new_weather == 'Sandstorm':
+                message = "Waiting out sandstorm between cities"
+            else:
+                message = f"Camped between {partial['from']} and {partial['to']}"
         else:
             current_city = session['current_city']
-            
-        neighboring_cities = list(session['graph_state'][current_city].keys())
+            neighboring_cities = list(session['graph_state'][current_city].keys())
+            message = f"Waiting in {current_city}"
 
         session['day'] += 1
         session['days_left'] -= 1
@@ -269,7 +278,8 @@ def wait():
             'daily_weather': daily_weather,
             'graph_state': session['graph_state'],
             'neighboring_cities': neighboring_cities,
-            'partial_travel': session.get('partial_travel')
+            'partial_travel': session.get('partial_travel'),
+            'message': message
         }
 
         return jsonify(data)
@@ -277,7 +287,6 @@ def wait():
     except Exception as e:
         print(f"Error in wait endpoint: {str(e)}")
         return jsonify({'error': str(e)}), 500
-
 
 @app.route('/api/complete-game', methods=['POST'])
 def complete_game():

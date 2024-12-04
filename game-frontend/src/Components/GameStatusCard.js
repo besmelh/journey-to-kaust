@@ -120,7 +120,7 @@ const GameStatusCard = ({
       };
     }
 
-    // Regular travel logic
+    // Regular travel logic...
     const edgeKey = `${gameState.current_city}-${selected_city}`;
     const reverseEdgeKey = `${selected_city}-${gameState.current_city}`;
     const weather =
@@ -155,6 +155,13 @@ const GameStatusCard = ({
     };
   };
 
+  const getWaitButtonText = () => {
+    if (gameState.partial_travel) {
+      return 'Camp here for the night';
+    }
+    return `Wait in ${gameState.current_city}`;
+  };
+
   const travelButtonProps = getTravelButtonProps();
 
   return (
@@ -172,16 +179,13 @@ const GameStatusCard = ({
       </StatusRow>
 
       <StatusRow>
-        <Label>Current city:</Label>
-        <Value>{gameState.current_city}</Value>
+        <Label>Location:</Label>
+        <Value>
+          {gameState.partial_travel
+            ? `Between ${gameState.partial_travel.from} and ${gameState.partial_travel.to}`
+            : gameState.current_city}
+        </Value>
       </StatusRow>
-
-      {gameState.partial_travel && (
-        <StatusRow>
-          <Label>Traveling to:</Label>
-          <Value>{gameState.partial_travel.to}</Value>
-        </StatusRow>
-      )}
 
       {gameState.partial_travel && (
         <StatusRow>
@@ -190,10 +194,19 @@ const GameStatusCard = ({
         </StatusRow>
       )}
 
-      <StatusRow>
-        <Label>Selected city:</Label>
-        <Value>{selected_city}</Value>
-      </StatusRow>
+      {selected_city && (
+        <StatusRow>
+          <Label>Selected city:</Label>
+          <Value>{selected_city}</Value>
+        </StatusRow>
+      )}
+
+      {gameState.message && (
+        <StatusRow>
+          <Label>Status:</Label>
+          <Value>{gameState.message}</Value>
+        </StatusRow>
+      )}
 
       <ButtonContainer>
         {travelButtonProps.variant === 'gray' ? (
@@ -205,11 +218,7 @@ const GameStatusCard = ({
             {travelButtonProps.text}
           </GreenButton>
         )}
-        <GreenButton onClick={onWait}>
-          {gameState.partial_travel
-            ? 'Continue journey'
-            : `Wait in ${gameState.current_city}`}
-        </GreenButton>
+        <GreenButton onClick={onWait}>{getWaitButtonText()}</GreenButton>
       </ButtonContainer>
     </Card>
   );
