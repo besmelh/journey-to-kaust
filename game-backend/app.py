@@ -13,7 +13,7 @@ app = Flask(__name__)
 # CORS(app, resources={r"/*": {"origins": "*"}})
 CORS(app, resources={
     r"/*": {
-        "origins": "https://journey-to-kaust.onrender.com/",
+        "origins": ["https://journey-to-kaust.netlify.app/", "http://journey-to-kaust.netlify.app/"],
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"],
         "supports_credentials": True
@@ -23,7 +23,7 @@ CORS(app, resources={
 # Optional: Add this after_request handler for additional headers
 @app.after_request
 def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', 'https://journey-to-kaust.onrender.com/')
+    response.headers.add('Access-Control-Allow-Origin', 'https://journey-to-kaust.netlify.app/')
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
     response.headers.add('Access-Control-Allow-Credentials', 'true')
