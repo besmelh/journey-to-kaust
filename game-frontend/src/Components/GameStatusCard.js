@@ -27,7 +27,8 @@ const StatusRow = styled.div`
 `;
 
 const Label = styled.span`
-  font-size: 18px;
+  font-size: 14px;
+  text-align: left;
   color: #4b5563;
 `;
 
@@ -36,6 +37,7 @@ const Value = styled.span`
   margin-left: 8px;
   font-weight: 900;
   color: #4b5563;
+  text-align: left;
 `;
 
 const ProgressBar = styled.div`
@@ -232,7 +234,7 @@ const GameStatusCard = ({
 
       <StatusRow>
         <Label>Travel hours remaining:</Label>
-        <Value>{gameState.hours_remaining}</Value>
+        <Value>{Number(gameState.hours_remaining).toFixed(2)}</Value>{' '}
       </StatusRow>
 
       <StatusRow>

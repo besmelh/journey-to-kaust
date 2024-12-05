@@ -94,24 +94,28 @@ const MainGame = () => {
   };
 
   const handleCitySelect = (city) => {
-    // During partial travel, don't allow new city selection
-    if (gameState.partial_travel) return;
+    // Check if the city is a neighboring city using the graphState
+    const isNeighbor =
+      gameState.graph_state[gameState.current_city] &&
+      gameState.graph_state[gameState.current_city][city] !== undefined;
 
-    if (gameState.neighboring_cities.includes(city)) {
+    if (isNeighbor) {
       setSelectedCity(city);
     }
   };
 
   const handleTravel = async () => {
+    if (!selected_city) return;
     try {
       const sessionId = localStorage.getItem('gameSessionId');
+      const updatedState = await gameApi.travelToCity(sessionId, selected_city);
       // If in partial travel, use the destination from partial_travel state
-      const destination = gameState.partial_travel
-        ? gameState.partial_travel.to
-        : selected_city;
+      // const destination = gameState.partial_travel
+      //   ? gameState.partial_travel.to
+      //   : selected_city;
 
-      if (!selected_city) return;
-      const updatedState = await gameApi.travelToCity(sessionId, destination);
+      // if (!selected_city) return;
+      // const updatedState = await gameApi.travelToCity(sessionId, destination);
 
       if (updatedState.travel_possible) {
         if (updatedState.partial_travel) {
@@ -145,9 +149,9 @@ const MainGame = () => {
         console.log('travel action data: ', gameState);
 
         // If not in partial travel, clear the selected city
-        if (!updatedState.partial_travel) {
-          setSelectedCity(null);
-        }
+        // if (!updatedState.partial_travel) {
+        //   setSelectedCity(null);
+        // }
 
         // Check if reached Thuwal
         if (updatedState.current_city === 'Thuwal') {
@@ -165,7 +169,7 @@ const MainGame = () => {
 
   const handleWait = async () => {
     try {
-      setSelectedCity(null);
+      // setSelectedCity(null);
 
       const sessionId = localStorage.getItem('gameSessionId');
       const updatedState = await gameApi.waitInCity(sessionId);
