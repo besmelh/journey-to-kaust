@@ -193,8 +193,12 @@ const MainGame = () => {
         graph_state: updatedState.graph_state,
       }));
 
-      setSelectedCity(null);
-
+      // If there's an ongoing journey, pre-select the destination
+      if (updatedState.partial_journey?.in_progress) {
+        setSelectedCity(updatedState.partial_journey.to_city);
+      } else {
+        setSelectedCity(null);
+      }
       console.log('wait action data: ', gameState);
     } catch (error) {
       console.error('Failed to wait:', error);

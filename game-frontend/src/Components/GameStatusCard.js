@@ -111,6 +111,17 @@ const GameStatusCard = ({
   const [loading, setLoading] = useState(false);
 
   const getTravelButtonProps = () => {
+    if (
+      gameState.partial_journey?.in_progress &&
+      gameState.hours_remaining === 0
+    ) {
+      return {
+        text: `Continue to ${gameState.partial_journey.to_city} tomorrow`,
+        disabled: true,
+        variant: 'gray',
+      };
+    }
+
     // If there's an ongoing journey, show continue button regardless of selection
     if (gameState.partial_journey?.in_progress) {
       const remainingDistance = gameState.partial_journey.remaining_distance;
@@ -229,12 +240,14 @@ const GameStatusCard = ({
         <Value>{gameState.days_left}</Value>
       </StatusRow>
 
+
+
+      {renderJourneyProgress()}
+
       <StatusRow>
         <Label>Current city:</Label>
         <Value>{gameState.current_city}</Value>
       </StatusRow>
-
-      {renderJourneyProgress()}
 
       <StatusRow>
         <Label>Selected city:</Label>

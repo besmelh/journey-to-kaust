@@ -245,6 +245,7 @@ const cityCoordinates = getScaledCoordinates();
 const MapGraph = ({ style, gameState = {}, onCitySelect, selected_city }) => {
   const [hoveredCity, setHoveredCity] = useState(null);
   const [hoveredEdge, setHoveredEdge] = useState(null);
+  // const [isActiveJourney, setIsActiveJourney] = useState(false);
   const goalCity = 'Thuwal';
 
   const {
@@ -311,22 +312,23 @@ const MapGraph = ({ style, gameState = {}, onCitySelect, selected_city }) => {
   // Get edge color based on its state and weather
   const getEdgeColor = (city1, city2, weight) => {
     const weather = getEdgeWeather(city1, city2);
-    // const speedMultiplier = SPEED_MULTIPLIERS[weather];
-    const isConnectedToCurrentCity =
-      city1 === gameState.current_city || city2 === gameState.current_city;
-    // const normalizedWeight = Math.min(weight / 800, 1);
+
+    // const isActiveJourney =
+    //   gameState.partial_journey?.in_progress &&
+    //   ((city1 === gameState.partial_journey.from_city &&
+    //     city2 === gameState.partial_journey.to_city) ||
+    //     (city2 === gameState.partial_journey.from_city &&
+    //       city1 === gameState.partial_journey.to_city));
+
+    // if (isActiveJourney) {
+    //   return '#ffffff'; // White for active journey
+    // }
 
     // color all edges based on weather
     if (weather === 'Sandstorm') return SANDSTORM; // Sandstorm - Red
     if (weather === 'Hot') return HOT;
     if (weather === 'Clear') return CLEAR;
 
-    // color connected edges to current city
-    // if (isConnectedToCurrentCity) {
-    //   if (weather === 'Sandstorm') return SANDSTORM; // Sandstorm - Red
-    //   if (weather === 'Hot') return HOT;
-    //   if (weather === 'Clear') return CLEAR;
-    // }
     return GREY; // Unconnected - Grey
   };
 
@@ -347,6 +349,13 @@ const MapGraph = ({ style, gameState = {}, onCitySelect, selected_city }) => {
     return Object.entries(edges)
       .flatMap(([city1, connections]) =>
         Object.entries(connections).map(([city2, weight]) => {
+          const isActiveJourney =
+            gameState.partial_journey?.in_progress &&
+            ((city1 === gameState.partial_journey.from_city &&
+              city2 === gameState.partial_journey.to_city) ||
+              (city2 === gameState.partial_journey.from_city &&
+                city1 === gameState.partial_journey.to_city));
+
           const pairKey = [city1, city2].sort().join('-');
           if (renderedEdges.has(pairKey)) return null;
           renderedEdges.add(pairKey);
@@ -384,6 +393,7 @@ const MapGraph = ({ style, gameState = {}, onCitySelect, selected_city }) => {
                 stroke={color}
                 strokeWidth={isHovered ? 4 : 1.5}
                 className='transition-all duration-200'
+                filter={isActiveJourney ? 'url(#glow)' : undefined}
               />
             </g>
           );
@@ -435,6 +445,15 @@ const MapGraph = ({ style, gameState = {}, onCitySelect, selected_city }) => {
     <MapContainer style={style}>
       <BackgroundMap src='/saudi-arabia-map.svg' alt='Saudi Arabia Map' />
       <MapSVG>
+        <defs>
+          <filter id='glow'>
+            <feGaussianBlur stdDeviation='5' result='coloredBlur' />
+            <feMerge>
+              <feMergeNode in='coloredBlur' />
+              <feMergeNode in='SourceGraphic' />
+            </feMerge>
+          </filter>
+        </defs>
         {renderEdges()}
         {Object.entries(cityCoordinates).map(([city, coords]) => (
           <g
