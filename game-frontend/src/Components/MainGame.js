@@ -94,42 +94,24 @@ const MainGame = () => {
   };
 
   const handleCitySelect = (city) => {
-    // Check if the city is a neighboring city using the graphState
-    const isNeighbor =
-      gameState.graph_state[gameState.current_city] &&
-      gameState.graph_state[gameState.current_city][city] !== undefined;
+    // During partial travel, don't allow new city selection
+    if (gameState.partial_travel) return;
 
-    if (isNeighbor) {
+    if (gameState.neighboring_cities.includes(city)) {
       setSelectedCity(city);
-
-      // Calculate required hours based on distance and weather
-      // const distance = gameState.graphState[gameState.current_city][city];
-      // const edgeKey = `${gameState.current_city}-${city}`;
-      // const reverseEdgeKey = `${city}-${gameState.current_city}`;
-      // const weather =
-      //   gameState.dailyWeather[edgeKey]?.weather ||
-      //   gameState.dailyWeather[reverseEdgeKey]?.weather ||
-      //   'Clear';
-
-      // const speedMultiplier =
-      //   weather === 'Clear' ? 1 : weather === 'Hot' ? 0.5 : 0;
-
-      // const requiredHours =
-      //   speedMultiplier === 0 ? Infinity : distance / (100 * speedMultiplier);
-
-      // setGameState((prev) => ({
-      //   ...prev,
-      //   requiredHours,
-      // }));
     }
   };
 
   const handleTravel = async () => {
-    if (!selected_city) return;
-
     try {
       const sessionId = localStorage.getItem('gameSessionId');
-      const updatedState = await gameApi.travelToCity(sessionId, selected_city);
+      // If in partial travel, use the destination from partial_travel state
+      const destination = gameState.partial_travel
+        ? gameState.partial_travel.to
+        : selected_city;
+
+      if (!selected_city) return;
+      const updatedState = await gameApi.travelToCity(sessionId, destination);
 
       if (updatedState.travel_possible) {
         if (updatedState.partial_travel) {
@@ -162,6 +144,11 @@ const MainGame = () => {
 
         console.log('travel action data: ', gameState);
 
+        // If not in partial travel, clear the selected city
+        if (!updatedState.partial_travel) {
+          setSelectedCity(null);
+        }
+
         // Check if reached Thuwal
         if (updatedState.current_city === 'Thuwal') {
           const results = await gameApi.completeGame(sessionId);
@@ -178,6 +165,8 @@ const MainGame = () => {
 
   const handleWait = async () => {
     try {
+      setSelectedCity(null);
+
       const sessionId = localStorage.getItem('gameSessionId');
       const updatedState = await gameApi.waitInCity(sessionId);
 

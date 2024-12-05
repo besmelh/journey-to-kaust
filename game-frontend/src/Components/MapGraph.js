@@ -290,13 +290,21 @@ const MapGraph = ({ style, gameState = {}, onCitySelect, selected_city }) => {
   };
 
   // Get vertex color based on its state
-  // Get vertex color based on its state
   const getVertexColor = (city) => {
-    if (city === current_city) return RED; // Current city - Red
-    if (city === goalCity) return GREEN; // Goal city - Green
+    // If we're in partial travel, make both source and destination cities blue (clickable)
+    if (gameState.partial_travel) {
+      if (
+        city === gameState.partial_travel.from ||
+        city === gameState.partial_travel.to
+      ) {
+        return BLUE;
+      }
+    }
+    if (city === current_city) return RED;
+    if (city === goalCity) return GREEN;
     if (visited_cities?.includes(city)) return PURPLE;
-    if (neighboring_cities?.includes(city)) return BLUE; // Connected cities - Blue
-    return GREY; // Unreachable cities - Grey
+    if (neighboring_cities?.includes(city)) return BLUE;
+    return GREY;
   };
 
   const getEdgeWeather = (city1, city2) => {
@@ -332,7 +340,14 @@ const MapGraph = ({ style, gameState = {}, onCitySelect, selected_city }) => {
     return GREY; // Unconnected - Grey
   };
 
+  // Modify isClickable to allow clicking source city during partial travel
   const isClickable = (city) => {
+    if (gameState.partial_travel) {
+      return (
+        city === gameState.partial_travel.from ||
+        city === gameState.partial_travel.to
+      );
+    }
     return gameState.neighboring_cities?.includes(city);
   };
 
@@ -452,6 +467,40 @@ const MapGraph = ({ style, gameState = {}, onCitySelect, selected_city }) => {
     );
   };
 
+  const renderPartialTravelIndicator = () => {
+    if (!gameState.partial_travel) return null;
+
+    const fromCity = gameState.partial_travel.from;
+    const toCity = gameState.partial_travel.to;
+    const progress = gameState.partial_travel.progress;
+
+    const startCoords = cityCoordinates[fromCity];
+    const endCoords = cityCoordinates[toCity];
+
+    if (!startCoords || !endCoords) return null;
+
+    // Calculate the position along the edge based on progress
+    const x = startCoords.x + (endCoords.x - startCoords.x) * progress;
+    const y = startCoords.y + (endCoords.y - startCoords.y) * progress;
+
+    return (
+      <g>
+        {/* Add a white background circle for better visibility */}
+        <circle cx={x} cy={y} r={10} fill='white' />
+        {/* Larger outer circle */}
+        <circle
+          cx={x}
+          cy={y}
+          r={8}
+          fill='rgba(255, 32, 117, 0.3)'
+          stroke='#FF2075'
+          strokeWidth={2}
+        />
+        {/* Inner red dot */}
+        <circle cx={x} cy={y} r={5} fill='#FF2075' />
+      </g>
+    );
+  };
   return (
     <MapContainer style={style}>
       <BackgroundMap src='/saudi-arabia-map.svg' alt='Saudi Arabia Map' />
@@ -466,6 +515,7 @@ const MapGraph = ({ style, gameState = {}, onCitySelect, selected_city }) => {
           </filter>
         </defs>
         {renderEdges()}
+        {renderPartialTravelIndicator()}
         {Object.entries(cityCoordinates).map(([city, coords]) => (
           <g
             key={city}
