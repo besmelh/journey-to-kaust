@@ -111,12 +111,11 @@ const GameStatusCard = ({
   const [loading, setLoading] = useState(false);
 
   const getTravelButtonProps = () => {
-
     // If there's an ongoing journey, show continue button regardless of selection
     if (gameState.partial_journey?.in_progress) {
       const remainingDistance = gameState.partial_journey.remaining_distance;
       const destination = gameState.partial_journey.to_city;
-      
+
       // If journey is not complete
       if (remainingDistance > 0) {
         return {
@@ -242,7 +241,6 @@ const GameStatusCard = ({
         <Value>{selected_city}</Value>
       </StatusRow>
 
-
       <ButtonContainer>
         {travelButtonProps.variant === 'gray' ? (
           <GrayButton disabled={travelButtonProps.disabled}>
@@ -254,7 +252,8 @@ const GameStatusCard = ({
           </GreenButton>
         )}
         <GreenButton onClick={onWait}>
-          Wait in {gameState.current_city}
+          {/* Wait in {gameState.current_city} */}
+          Wait in place until tomorrow.
         </GreenButton>
       </ButtonContainer>
     </Card>

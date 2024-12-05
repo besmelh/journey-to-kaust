@@ -13,12 +13,14 @@ app = Flask(__name__)
 # CORS(app, resources={r"/*": {"origins": "*"}})
 CORS(app, resources={
     r"/*": {
-        "origins": ["http://localhost:3000"],
+        "origins": "http://localhost:3000",
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"],
         "supports_credentials": True
     }
 })
+
+# Optional: Add this after_request handler for additional headers
 @app.after_request
 def after_request(response):
     response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
@@ -163,6 +165,8 @@ def travel():
                 session['neighboring_cities'] = [destination]  # Can only continue to destination
             
             return jsonify({
+                'day': session['day'],
+                'days_left': session['days_left'],
                 'travel_possible': True,
                 'partial_travel': journey['in_progress'],
                 'current_city': session['current_city'],
@@ -220,6 +224,8 @@ def travel():
                 session['visited_cities'].append(current_city)
             
             return jsonify({
+                'day': session['day'],
+                'days_left': session['days_left'],
                 'travel_possible': True,
                 'partial_travel': True,
                 'current_city': current_city,
@@ -250,6 +256,8 @@ def travel():
         session['neighboring_cities'] = list(session['graph_state'][destination].keys())
         
         return jsonify({
+            'day': session['day'],
+            'days_left': session['days_left'],
             'travel_possible': True,
             'partial_travel': False,
             'current_city': destination,
@@ -285,24 +293,30 @@ def wait():
                 daily_weather[f"{city1}-{city2}"] = {'weather': weather}
                 daily_weather[f"{city2}-{city1}"] = {'weather': weather}
         
-        current_city = session['current_city']
-        neighboring_cities = list(session['graph_state'][current_city].keys())
+         # If in partial travel, make destination the current city for next day
+        if session['partial_journey']['in_progress']:
+            # session['current_city'] = session['partial_journey']['to_city']
+            session['neighboring_cities'] = [session['partial_journey']['to_city']]
+        # else:
+        #     current_city = session['current_city']
+        #     session['neighboring_cities'] = list(session['graph_state'][current_city].keys())
 
         session['day'] += 1
         session['days_left'] -= 1
         session['hours_remaining'] = DAILY_HOURS
         session['daily_weather'] = daily_weather
-        session['weather_history'][session['day']] = daily_weather
+        # session['weather_history'][session['day']] = daily_weather
         
         data = {
             'current_city': session['current_city'],
             'day': session['day'],
-            'hours_remaining': DAILY_HOURS,
             'days_left': session['days_left'],
+            'hours_remaining': DAILY_HOURS,
             'daily_weather': daily_weather,
             'graph_state': session['graph_state'],
-            'neighboring_cities': neighboring_cities
-        }
+            'neighboring_cities': session['neighboring_cities'],
+            'partial_journey': session['partial_journey']        
+            }
 
         return jsonify(data)
     
