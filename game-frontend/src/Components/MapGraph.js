@@ -267,7 +267,7 @@ const MapGraph = ({ style, gameState = {}, onCitySelect, selected_city }) => {
     const speedMultiplier = SPEED_MULTIPLIERS[weather];
     if (speedMultiplier === 0) return 'No travel possible';
 
-    const timeInHours = weight / (BASE_SPEED * speedMultiplier);
+    const timeInHours = weight / (BASE_SPEED * speedMultiplier).toFixed(2);
     const hours = Math.floor(timeInHours);
     const minutes = Math.round((timeInHours - hours) * 60);
     return `${hours}h ${minutes}m`;
@@ -374,6 +374,18 @@ const MapGraph = ({ style, gameState = {}, onCitySelect, selected_city }) => {
               onMouseEnter={() => setHoveredEdge(pairKey)}
               onMouseLeave={() => setHoveredEdge(null)}
             >
+              {isActiveJourney && (
+                <line
+                  x1={start.x}
+                  y1={start.y}
+                  x2={end.x}
+                  y2={end.y}
+                  stroke='white'
+                  strokeWidth={4}
+                  className='transition-all duration-200'
+                  filter='url(#glow)'
+                />
+              )}
               {/* Invisible wider line for hover detection */}
               <line
                 x1={start.x}
@@ -393,7 +405,6 @@ const MapGraph = ({ style, gameState = {}, onCitySelect, selected_city }) => {
                 stroke={color}
                 strokeWidth={isHovered ? 4 : 1.5}
                 className='transition-all duration-200'
-                filter={isActiveJourney ? 'url(#glow)' : undefined}
               />
             </g>
           );

@@ -240,19 +240,20 @@ const GameStatusCard = ({
         <Value>{gameState.days_left}</Value>
       </StatusRow>
 
-
-
       {renderJourneyProgress()}
 
-      <StatusRow>
-        <Label>Current city:</Label>
-        <Value>{gameState.current_city}</Value>
-      </StatusRow>
-
-      <StatusRow>
-        <Label>Selected city:</Label>
-        <Value>{selected_city}</Value>
-      </StatusRow>
+      {!gameState.partial_journey?.in_progress && (
+        <>
+          <StatusRow>
+            <Label>Current city:</Label>
+            <Value>{gameState.current_city}</Value>
+          </StatusRow>
+          <StatusRow>
+            <Label>Selected city:</Label>
+            <Value>{selected_city}</Value>
+          </StatusRow>
+        </>
+      )}
 
       <ButtonContainer>
         {travelButtonProps.variant === 'gray' ? (
