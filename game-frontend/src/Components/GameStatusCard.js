@@ -38,6 +38,22 @@ const Value = styled.span`
   color: #4b5563;
 `;
 
+const ProgressBar = styled.div`
+  width: 100%;
+  height: 8px;
+  background-color: #e5e7eb;
+  border-radius: 4px;
+  margin: 8px 0;
+  overflow: hidden;
+`;
+
+const ProgressFill = styled.div`
+  height: 100%;
+  background-color: #3b82f6;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+`;
+
 const ButtonContainer = styled.div`
   margin-top: 24px;
   display: flex;
@@ -70,6 +86,13 @@ const GreenButton = styled(Button)`
   }
 `;
 
+const JourneyStatus = styled.div`
+  background-color: #f3f4f6;
+  border-radius: 4px;
+  padding: 12px;
+  margin: 12px 0;
+`;
+
 //const GameStatusCard = ({ style }) => {
 
 const SPEED_MULTIPLIERS = {
@@ -88,6 +111,22 @@ const GameStatusCard = ({
   const [loading, setLoading] = useState(false);
 
   const getTravelButtonProps = () => {
+
+    // If there's an ongoing journey, show continue button regardless of selection
+    if (gameState.partial_journey?.in_progress) {
+      const remainingDistance = gameState.partial_journey.remaining_distance;
+      const destination = gameState.partial_journey.to_city;
+      
+      // If journey is not complete
+      if (remainingDistance > 0) {
+        return {
+          text: `Continue to ${destination}`,
+          disabled: false,
+          variant: 'green',
+        };
+      }
+    }
+
     if (!selected_city) {
       return {
         text: 'No city selected',
@@ -95,6 +134,15 @@ const GameStatusCard = ({
         variant: 'gray',
       };
     }
+
+    // If there's an ongoing journey, only allow continuing to destination
+    // if (gameState.partial_journey?.in_progress) {
+    //   return {
+    //     text: `Continue to ${gameState.partial_journey.to_city}`,
+    //     disabled: selected_city !== gameState.partial_journey.to_city,
+    //     variant: 'green',
+    //   };
+    // }
 
     console.log('selected city: ', selected_city);
 
@@ -126,21 +174,44 @@ const GameStatusCard = ({
     console.log('timeInHours: ', timeInHours);
     console.log('hours_remaining: ', gameState.hours_remaining);
 
-    if (timeInHours > gameState.hours_remaining) {
-      console.log('timeInHours > gameState.hours_remaining');
+    if (timeInHours <= gameState.hours_remaining) {
       return {
-        text: `${selected_city} cannot be reached today.`,
-        disabled: true,
-        variant: 'gray',
+        text: `Travel to ${selected_city}`,
+        disabled: false,
+        variant: 'green',
       };
     }
 
-    console.log('passed all checks. can travel to selection');
+    // If journey would take longer than remaining hours but weather permits
     return {
-      text: `Travel to ${selected_city}`,
+      text: `Start Journey to ${selected_city}`,
       disabled: false,
       variant: 'green',
+      isPartialJourney: true,
     };
+  };
+
+  const renderJourneyProgress = () => {
+    const journey = gameState.partial_journey;
+    if (!journey?.in_progress) return null;
+
+    const progress =
+      ((journey.total_distance - journey.remaining_distance) /
+        journey.total_distance) *
+      100;
+
+    return (
+      <JourneyStatus>
+        <Label>Current Journey:</Label>
+        <Value>{`${journey.from_city} → ${journey.to_city}`}</Value>
+        <ProgressBar>
+          <ProgressFill style={{ width: `${progress}%` }} />
+        </ProgressBar>
+        <div className='text-sm text-gray-600 mt-2'>
+          {`${Math.round(progress)}% complete`}
+        </div>
+      </JourneyStatus>
+    );
   };
 
   const travelButtonProps = getTravelButtonProps();
@@ -164,15 +235,13 @@ const GameStatusCard = ({
         <Value>{gameState.current_city}</Value>
       </StatusRow>
 
+      {renderJourneyProgress()}
+
       <StatusRow>
         <Label>Selected city:</Label>
         <Value>{selected_city}</Value>
       </StatusRow>
 
-      {/* <StatusRow>
-        <Label>Neigboring cities:</Label>
-        <Value>{gameState.neighboring_cities}</Value>
-      </StatusRow> */}
 
       <ButtonContainer>
         {travelButtonProps.variant === 'gray' ? (

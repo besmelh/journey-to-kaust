@@ -27,7 +27,15 @@ def after_request(response):
     response.headers.add('Access-Control-Allow-Credentials', 'true')
     return response
 
-game_sessions = {}
+game_sessions = {
+     'partial_journey': {
+        'in_progress': False,
+        'from_city': None,
+        'to_city': None,
+        'total_distance': 0,
+        'remaining_distance': 0
+    }
+}
 
 @app.route('/', methods=['GET'])
 def home():
@@ -101,43 +109,163 @@ def travel():
         
         session = game_sessions[session_id]
         current_city = session['current_city']
+        
+        # Handle ongoing partial journey
+        if session.get('partial_journey', {}).get('in_progress'):
+            journey = session['partial_journey']
+            
+            # Check if trying to travel to a different destination
+            if destination != journey['to_city']:
+                return jsonify({
+                    'travel_possible': False,
+                    'message': 'Must complete current journey first'
+                }), 400
 
+            # Get current weather for the journey
+            edge_key = f"{current_city}-{destination}"
+            reverse_edge_key = f"{destination}-{current_city}"
+            weather = (session['daily_weather'].get(edge_key, {}).get('weather') or 
+                      session['daily_weather'].get(reverse_edge_key, {}).get('weather'))
+            
+            if weather == 'Sandstorm':
+                return jsonify({
+                    'travel_possible': False,
+                    'message': 'Cannot continue journey during sandstorm'
+                }), 200
+            
+            # Calculate how far they can travel today
+            speed = 50 if weather == 'Hot' else 100
+            possible_distance = session['hours_remaining'] * speed
+            
+            if possible_distance >= journey['remaining_distance']:
+                # Journey can be completed
+                time_needed = journey['remaining_distance'] / speed
+                session['hours_remaining'] -= time_needed
+                session['current_city'] = destination
+                if destination not in session['visited_cities']:
+                    session['visited_cities'].append(destination)
+                
+                # Clear partial journey state
+                session['partial_journey'] = {
+                    'in_progress': False,
+                    'from_city': None,
+                    'to_city': None,
+                    'total_distance': 0,
+                    'remaining_distance': 0
+                }
+                
+                # Update available neighboring cities
+                session['neighboring_cities'] = list(session['graph_state'][destination].keys())
+            else:
+                # Continue partial journey
+                journey['remaining_distance'] -= possible_distance
+                session['hours_remaining'] = 0
+                session['neighboring_cities'] = [destination]  # Can only continue to destination
+            
+            return jsonify({
+                'travel_possible': True,
+                'partial_travel': journey['in_progress'],
+                'current_city': session['current_city'],
+                'hours_remaining': session['hours_remaining'],
+                'daily_weather': session['daily_weather'],
+                'graph_state': session['graph_state'],
+                'neighboring_cities': session['neighboring_cities'],
+                'visited_cities': session['visited_cities'],
+                'partial_journey': session['partial_journey']
+            })
+
+        # Handle new journey
         # Get edge weather
         edge_key = f"{current_city}-{destination}"
-        weather = session['daily_weather'].get(edge_key, {}).get('weather', 'Clear')
+        reverse_edge_key = f"{destination}-{current_city}"
+        weather = (session['daily_weather'].get(edge_key, {}).get('weather') or 
+                  session['daily_weather'].get(reverse_edge_key, {}).get('weather'))
         
+        if not weather:
+            return jsonify({'error': 'Invalid route or weather data not found'}), 400
+            
         # Calculate travel possibility
+        if current_city not in session['graph_state'] or destination not in session['graph_state'][current_city]:
+            return jsonify({'error': 'Invalid route'}), 400
+            
         distance = session['graph_state'][current_city][destination]
         speed = 50 if weather == 'Hot' else 100
         hours_needed = distance / speed
         
-        if weather == 'Sandstorm' or hours_needed > session['hours_remaining']:
+        # If this is a sandstorm, prevent travel
+        if weather == 'Sandstorm':
             return jsonify({
                 'travel_possible': False,
-                'message': 'Travel not possible'
+                'message': 'Cannot travel during sandstorm'
             }), 200
+            
+        # If travel time exceeds remaining hours, set up partial journey
+        if hours_needed > session['hours_remaining']:
+            possible_distance = session['hours_remaining'] * speed
+            remaining_distance = distance - possible_distance
+            
+            # Update session state for partial journey
+            session['partial_journey'] = {
+                'in_progress': True,
+                'from_city': current_city,
+                'to_city': destination,
+                'total_distance': distance,
+                'remaining_distance': remaining_distance
+            }
+            
+            # Update travel state
+            session['hours_remaining'] = 0
+            session['neighboring_cities'] = [destination]  # Can only continue to destination
+            if current_city not in session['visited_cities']:
+                session['visited_cities'].append(current_city)
+            
+            return jsonify({
+                'travel_possible': True,
+                'partial_travel': True,
+                'current_city': current_city,
+                'hours_remaining': 0,
+                'daily_weather': session['daily_weather'],
+                'graph_state': session['graph_state'],
+                'neighboring_cities': [destination],
+                'visited_cities': session['visited_cities'],
+                'partial_journey': session['partial_journey']
+            })
         
-        # Update session state
+        # Complete journey is possible
         session['current_city'] = destination
         session['hours_remaining'] -= hours_needed
         if destination not in session['visited_cities']:
             session['visited_cities'].append(destination)
+        
+        # Clear any existing partial journey
+        session['partial_journey'] = {
+            'in_progress': False,
+            'from_city': None,
+            'to_city': None,
+            'total_distance': 0,
+            'remaining_distance': 0
+        }
+        
+        # Update neighboring cities
         session['neighboring_cities'] = list(session['graph_state'][destination].keys())
         
         return jsonify({
             'travel_possible': True,
+            'partial_travel': False,
             'current_city': destination,
             'hours_remaining': session['hours_remaining'],
             'daily_weather': session['daily_weather'],
             'graph_state': session['graph_state'],
             'neighboring_cities': session['neighboring_cities'],
-            'visited_cities': session['visited_cities']
+            'visited_cities': session['visited_cities'],
+            'partial_journey': session['partial_journey']
         })
     
     except Exception as e:
         print(f"Error in travel endpoint: {str(e)}")
+        traceback.print_exc()  # This will print the full stack trace
         return jsonify({'error': str(e)}), 500
-
+    
 # Advances to next day
 # Generates new weather
 # Resets daily hours

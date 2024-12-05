@@ -5,6 +5,7 @@ import GameStatusCard from './GameStatusCard';
 import Legend from './Legend';
 import { gameApi } from '../services/gameApi';
 import GameCompletionModal from './GameCompletionModal';
+import PartialTravelModal from './PartialTravelModal';
 
 const Container = styled.div`
   width: 90%;
@@ -26,6 +27,9 @@ const MAX_HOURS = 5;
 const MainGame = () => {
   const [showCompletion, setShowCompletion] = useState(false);
   const [gameResults, setGameResults] = useState(null);
+
+  const [showPartialTravel, setShowPartialTravel] = useState(false);
+  const [partialTravelDetails, setPartialTravelDetails] = useState(null);
 
   const [selected_city, setSelectedCity] = useState(null);
   const [gameState, setGameState] = useState({
@@ -128,10 +132,20 @@ const MainGame = () => {
       const updatedState = await gameApi.travelToCity(sessionId, selected_city);
 
       if (updatedState.travel_possible) {
-        // Extract new neighboring cities from the updated graph state
-        // const new_neighboring_cities = updatedState.graph_state[selected_city]
-        //   ? Object.keys(updatedState.graph_state[selected_city])
-        //   : [];
+        if (updatedState.partial_travel) {
+          setPartialTravelDetails({
+            destination: selected_city,
+            total_distance: updatedState.total_distance,
+            remaining_distance: updatedState.remaining_distance,
+            weather:
+              updatedState.daily_weather[
+                `${gameState.current_city}-${selected_city}`
+              ]?.weather,
+            remainingHours: gameState.hours_remaining,
+          });
+          setShowPartialTravel(true);
+          console.log('partial travel data: ', gameState);
+        }
 
         setGameState((prevState) => ({
           ...prevState,
@@ -144,9 +158,6 @@ const MainGame = () => {
           neighboring_cities: updatedState.neighboring_cities,
           graph_state: updatedState.graph_state,
           daily_weather: updatedState.daily_weather,
-
-          // current_city: selected_city,
-          // neighboring_cities: new_neighboring_cities,
         }));
 
         console.log('travel action data: ', gameState);
@@ -181,6 +192,8 @@ const MainGame = () => {
         neighboring_cities: updatedState.neighboring_cities,
         graph_state: updatedState.graph_state,
       }));
+
+      setSelectedCity(null);
 
       console.log('wait action data: ', gameState);
     } catch (error) {
@@ -218,6 +231,15 @@ const MainGame = () => {
         optimalPath={gameResults?.optimal_path}
         startCity={gameResults?.start_city}
       />
+      {/* <PartialTravelModal
+        isOpen={showPartialTravel}
+        onClose={() => setShowPartialTravel(false)}
+        onConfirm={() => {
+          setShowPartialTravel(false);
+          // The travel has already been processed, just need to close the modal
+        }}
+        {...partialTravelDetails}
+      /> */}
     </Container>
   );
 };
